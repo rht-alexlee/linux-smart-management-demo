@@ -1,0 +1,182 @@
+# ============================================================================
+# Playbook: Service Check Site Playbook
+# ============================================================================
+#
+# Description:
+#   Main playbook for automated service status checking across multiple
+#   Linux hosts. This playbook orchestrates the service_check role to
+#   generate service status reports on remote hosts and collect them back
+#   to the control node.
+#
+# Purpose:
+#   - Automate service status checking across multiple hosts
+#   - Generate detailed service status reports
+#   - Collect reports back to control node for centralized analysis
+#   - Provide comprehensive status visibility for critical services
+#
+# Workflow:
+#   1. Play 1: Execute service check role on all target hosts (generate reports)
+#   2. Play 2: Collect reports from all target hosts to control node
+#   3. Play 3: Display final summary and confirmation
+#
+# Usage:
+#   ansible-playbook service_check_site.yml -i inventory
+#
+# Author: GCG AAP SSA Team + v3.01 20260217
+#
+# License:
+#   📜 License Type: End User License Agreement (EULA)
+#   🔒 Authorization: Subscription-based License
+#
+# ============================================================================
+
+---
+# ============================================================================
+# Play 1: Execute Service Check on All Hosts
+# ============================================================================
+# This play runs the service_check role on all target hosts to generate
+# service status reports. The role will check all services defined in
+# defaults/main.yml and create a report file on each host.
+- name: Execute service check and generate reports on all hosts
+  hosts: all
+  become: true
+  gather_facts: true
+
+  tasks:
+    # ========================================================================
+    # OS Compatibility Validation
+    # ========================================================================
+    - name: Validate OS compatibility (RHEL/CentOS 7/8/9 only)
+      ansible.builtin.assert:
+        that:
+          - ansible_os_family == "RedHat"
+          - ansible_distribution in ['RedHat', 'CentOS']
+          - ansible_distribution_major_version in ['7', '8', '9']
+        fail_msg: "Unsupported operating system. This playbook is only available for RHEL 7/8/9 and CentOS 7/8/9. Current OS: {{ ansible_distribution }} {{ ansible_distribution_major_version }}"
+        success_msg: "OS compatibility check passed: {{ ansible_distribution }} {{ ansible_distribution_major_version }}"
+      tags:
+        - validation
+        - always
+
+    - name: Display OS information for debugging
+      ansible.builtin.debug:
+        msg:
+          - "Distribution: {{ ansible_distribution }}"
+          - "Version: {{ ansible_distribution_version }}"
+          - "Major Version: {{ ansible_distribution_major_version }}"
+      tags:
+        - validation
+        - debug
+
+    # ========================================================================
+    # Execute Service Check Role
+    # ========================================================================
+    - name: Include service_check role
+      ansible.builtin.include_role:
+        name: service_check
+      tags:
+        - check
+        - always
+
+# ============================================================================
+# Play 2: Collect Reports from All Hosts
+# ============================================================================
+# This play collects the generated report files from all target hosts
+# back to the control node for centralized analysis and storage.
+- name: Collect service check reports from all hosts
+  hosts: all
+  gather_facts: false
+
+  vars:
+    # Define variables needed for this play (not loaded from role)
+    report_base_path: "/tmp"
+    collection_dest_path: "/tmp"
+
+  tasks:
+    # ========================================================================
+    # Validate Collection Parameters
+    # ========================================================================
+    - name: Validate collection destination path
+      ansible.builtin.assert:
+        that:
+          - collection_dest_path is defined
+          - collection_dest_path | length > 0
+        fail_msg: "collection_dest_path must be a valid directory path"
+        success_msg: "Collection destination path validated: {{ collection_dest_path }}"
+      tags:
+        - validation
+        - always
+
+    - name: Display collection configuration for debugging
+      ansible.builtin.debug:
+        msg:
+          - "Report source path: {{ report_base_path }}/linux_service_check_{{ inventory_hostname }}.txt"
+          - "Collection destination: {{ collection_dest_path }}"
+      tags:
+        - collection
+        - debug
+
+    # ========================================================================
+    # Fetch Report Files
+    # ========================================================================
+    # When using flat: yes with a directory destination, ensure the path
+    # ends with a trailing slash to indicate it's a directory
+    - name: Fetch report file from remote host
+      ansible.builtin.fetch:
+        src: "{{ report_base_path }}/linux_service_check_{{ inventory_hostname }}.txt"
+        dest: "{{ collection_dest_path }}/"
+        flat: yes
+      register: fetch_result
+      tags:
+        - collection
+        - always
+
+    - name: Display fetch result for debugging
+      ansible.builtin.debug:
+        msg:
+          - "Report file fetched: {{ fetch_result.changed | default(false) }}"
+          - "Destination: {{ collection_dest_path }}/linux_service_check_{{ inventory_hostname }}.txt"
+      tags:
+        - collection
+        - debug
+
+# ============================================================================
+# Play 3: Final Summary and Confirmation
+# ============================================================================
+# This play runs on localhost to display a final summary and confirmation
+# that all reports have been successfully collected.
+- name: Display final summary and confirmation
+  hosts: localhost
+  connection: local
+  gather_facts: false
+
+  vars:
+    collection_dest_path: "/tmp"
+
+  tasks:
+    # ========================================================================
+    # Final Summary
+    # ========================================================================
+    - name: Display completion summary
+      ansible.builtin.debug:
+        msg:
+          - "✅ All service check reports have been successfully collected!"
+          - "Reports are stored in the control node's {{ collection_dest_path }}/ directory."
+          - "Report file naming format: linux_service_check_<hostname>.txt"
+          - "You can review individual reports or aggregate them for analysis."
+      tags:
+        - summary
+        - always
+
+    - name: Display next steps
+      ansible.builtin.debug:
+        msg:
+          - "Next steps:"
+          - "  1. Review individual reports: cat {{ collection_dest_path }}/linux_service_check_<hostname>.txt"
+          - "  2. Aggregate reports for analysis"
+          - "  3. Identify services that are not running or not enabled"
+          - "  4. Take corrective actions as needed"
+      tags:
+        - summary
+        - always
+
