@@ -1,0 +1,37 @@
+# 02: SP_02_Automated_Inspection_of_Linux（带 Survey，多选）
+  - name: SP_02_Automated_Inspection_of_Linux
+    description: 02_Automated_Inspection_of_Linux
+    organization: StarterPack
+    inventory: rhel7_SP
+    project: Starter_Pack_v3_Offline
+    execution_environment: Default execution environment
+    playbook: 02_Automated_Inspection_of_Linux/service_check_site.yml
+    credentials:
+      - SP_credential_for_rhel7
+    survey_enabled: true
+    survey:
+      name: Critical Services Survey
+      description: input the critical_services_list you want to Customized
+      spec:
+        - question_name: input the critical_services_list you want to Customized
+          question_description: input the critical_services_list you want to Customized
+          variable: critical_services_list
+          type: multiselect
+          required: true
+          choices: |
+            sshd
+            firewalld
+            chronyd
+            NetworkManager
+            rsyslog
+            tuned
+            auditd
+            crond
+            dbus
+            systemd-journald
+          default: |
+            sshd
+            firewalld
+            chronyd
+            NetworkManager
+            rsyslog
