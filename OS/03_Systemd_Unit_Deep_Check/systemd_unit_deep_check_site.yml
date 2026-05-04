@@ -1,0 +1,341 @@
+# ============================================================================
+# Playbook: Systemd Unit Deep Check and Analysis
+# ============================================================================
+#
+# Description:
+#   This playbook automates deep investigation of failed systemd units on
+#   RHEL/CentOS systems. It performs the following tasks:
+#   1. Validates OS compatibility and prerequisites
+#   2. Lists all failed systemd units
+#   3. Analyzes each failed unit with detailed status and recent logs
+#   4. Generates comprehensive investigation reports
+#   5. Saves reports to local files for further analysis
+#
+#   This playbook is designed for production environments and focuses on
+#   investigation and reporting only. It does not modify system state or
+#   restart services, allowing administrators to make informed decisions
+#   about remediation.
+#
+# Author: GCG AAP SSA Team + v3.01 20260216
+#
+# License:
+#   📜 License Type: End User License Agreement (EULA)
+#   🔒 Authorization: Subscription-based License
+#
+# ============================================================================
+
+---
+# ============================================================================
+# Play 1: Systemd Unit Deep Check and Analysis
+# ============================================================================
+- name: "Play 1: Systemd Unit Deep Check and Analysis"
+  hosts: all
+  become: true
+  gather_facts: true
+
+  vars:
+    # --- Core Configuration Variables ---
+    # Report file path on target host
+    report_path: "/tmp/systemd_unit_investigation_{{ ansible_hostname }}.json"
+    
+    # Report collection destination on control node
+    report_dest_path: "./reports/"
+    
+    # Number of log lines to retrieve for each failed unit
+    log_lines: 20
+
+  tasks:
+    # ========================================================================
+    # OS Compatibility Validation
+    # ========================================================================
+    - name: "Validate OS compatibility"
+      ansible.builtin.assert:
+        that:
+          - ansible_distribution in ["RedHat", "CentOS"]
+          - ansible_distribution_major_version in ["7", "8", "9"]
+        fail_msg: "Unsupported operating system. This playbook is not available for the current OS. Supported: RHEL/CentOS 7/8/9"
+        success_msg: "OS compatibility check passed: {{ ansible_distribution }} {{ ansible_distribution_major_version }}"
+      tags:
+        - validation
+        - always
+
+    - name: "Display OS information"
+      ansible.builtin.debug:
+        msg:
+          - "OS Distribution: {{ ansible_distribution }}"
+          - "OS Version: {{ ansible_distribution_version }}"
+          - "OS Major Version: {{ ansible_distribution_major_version }}"
+          - "Hostname: {{ ansible_hostname }}"
+      tags:
+        - validation
+        - debug
+
+    # ========================================================================
+    # Prerequisites Check: systemctl Command
+    # ========================================================================
+    - name: "Check if systemctl command is available"
+      block:
+        - name: "Check systemctl command availability"
+          ansible.builtin.command: "which systemctl"
+          register: systemctl_check
+          changed_when: false
+          failed_when: false
+
+        - name: "Check journalctl command availability"
+          ansible.builtin.command: "which journalctl"
+          register: journalctl_check
+          changed_when: false
+          failed_when: false
+
+        - name: "Display systemd tools availability status"
+          ansible.builtin.debug:
+            msg:
+              - "Prerequisites check completed"
+              - "systemctl available: {{ 'Yes' if (systemctl_check.rc is defined and systemctl_check.rc == 0) else 'No' }}"
+              - "journalctl available: {{ 'Yes' if (journalctl_check.rc is defined and journalctl_check.rc == 0) else 'No' }}"
+          when:
+            - systemctl_check is defined
+            - journalctl_check is defined
+
+      rescue:
+        - name: "Handle prerequisites check failure"
+          ansible.builtin.debug:
+            msg: "Warning: Failed to check systemd tools availability. Investigation may be limited."
+          ignore_errors: true
+
+    # ========================================================================
+    # Task 1: List Failed Systemd Units
+    # ========================================================================
+    - name: "Task 1: List failed systemd units"
+      block:
+        - name: "List failed systemd units"
+          ansible.builtin.command: "systemctl list-units --state=failed --no-legend"
+          register: failed_units
+          changed_when: false
+          failed_when: false
+          when: systemctl_check is defined and systemctl_check.rc is defined and systemctl_check.rc == 0
+
+        - name: "Set empty failed units list when systemctl not available"
+          ansible.builtin.set_fact:
+            failed_units:
+              stdout: ""
+              stdout_lines: []
+              rc: 1
+          when: systemctl_check is not defined or systemctl_check.rc is not defined or systemctl_check.rc != 0
+
+        - name: "Count failed units"
+          ansible.builtin.set_fact:
+            failed_units_count: "{{ failed_units.stdout_lines | default([]) | length }}"
+          when: failed_units is defined
+
+        - name: "Display failed units detection status"
+          ansible.builtin.debug:
+            msg:
+              - "Failed systemd units detection completed"
+              - "Failed units found: {{ failed_units_count | default(0) | int }}"
+              - "{{ 'Failed units detected. Investigation will continue.' if (failed_units_count | default(0) | int > 0) else 'No failed units found. All systemd units are healthy.' }}"
+          when: failed_units is defined
+
+      rescue:
+        - name: "Handle failed units detection failure"
+          ansible.builtin.debug:
+            msg: "Warning: Failed to detect failed systemd units. Investigation will continue with available data."
+          ignore_errors: true
+        - name: "Set empty failed units on error"
+          ansible.builtin.set_fact:
+            failed_units:
+              stdout: ""
+              stdout_lines: []
+            failed_units_count: 0
+
+    # ========================================================================
+    # Task 2: Analyze Each Failed Unit
+    # ========================================================================
+    - name: "Task 2: Analyze each failed unit"
+      block:
+        - name: "Extract unit names from failed units list"
+          ansible.builtin.set_fact:
+            failed_unit_names: "{{ failed_units.stdout_lines | default([]) | map('regex_replace', '^([^\\s]+).*', '\\1') | list }}"
+          when:
+            - failed_units is defined
+            - failed_units.stdout_lines is defined
+            - (failed_units_count | default(0) | int) > 0
+
+        - name: "Get detailed status and logs for each failed unit"
+          ansible.builtin.shell: |
+            UNIT_NAME="{{ item }}"
+            echo "=========================================="
+            echo "Analysis for Unit: $UNIT_NAME"
+            echo "=========================================="
+            echo ""
+            echo "--- Unit Status ---"
+            systemctl status "$UNIT_NAME" || echo "Unable to retrieve status for $UNIT_NAME"
+            echo ""
+            echo "--- Recent Logs (last {{ log_lines }} lines) ---"
+            journalctl -u "$UNIT_NAME" -n {{ log_lines }} --no-pager || echo "Unable to retrieve logs for $UNIT_NAME"
+            echo "=========================================="
+          loop: "{{ failed_unit_names | default([]) }}"
+          register: unit_analysis
+          changed_when: false
+          failed_when: false
+          when:
+            - failed_units is defined
+            - failed_unit_names is defined
+            - (failed_units_count | default(0) | int) > 0
+
+        - name: "Display unit analysis status"
+          ansible.builtin.debug:
+            msg:
+              - "Unit analysis completed"
+              - "Analyzed {{ unit_analysis.results | default([]) | length }} failed unit(s)"
+          when:
+            - failed_units is defined
+            - (failed_units_count | default(0) | int) > 0
+            - unit_analysis is defined
+
+        - name: "Display message when no failed units"
+          ansible.builtin.debug:
+            msg: "No failed units detected. Skipping detailed analysis."
+          when: failed_units is defined and (failed_units_count | default(0) | int) == 0
+
+      rescue:
+        - name: "Handle unit analysis failure"
+          ansible.builtin.debug:
+            msg: "Warning: Failed to complete detailed analysis for some failed units. Partial information may be available."
+          ignore_errors: true
+
+    # ========================================================================
+    # Task 3: Display Analysis Results
+    # ========================================================================
+    - name: "Task 3: Display analysis results"
+      block:
+        - name: "Display detailed analysis for each failed unit"
+          ansible.builtin.debug:
+            msg: "{{ item.stdout | default('No output available') }}"
+          loop: "{{ unit_analysis.results | default([]) }}"
+          when:
+            - failed_units is defined
+            - (failed_units_count | default(0) | int) > 0
+            - unit_analysis is defined
+            - unit_analysis.results is defined
+
+        - name: "Display summary when no failed units"
+          ansible.builtin.debug:
+            msg:
+              - "=========================================="
+              - "Systemd Unit Health Check Summary"
+              - "=========================================="
+              - "Host: {{ ansible_hostname }}"
+              - "Status: All systemd units are in a healthy state."
+              - "Failed Units: 0"
+              - "=========================================="
+          when: failed_units is defined and (failed_units_count | default(0) | int) == 0
+
+      rescue:
+        - name: "Handle display failure"
+          ansible.builtin.debug:
+            msg: "Warning: Failed to display some analysis results. Check report file for complete information."
+          ignore_errors: true
+
+    # ========================================================================
+    # Task 4: Save Report to Local File
+    # ========================================================================
+    - name: "Task 4: Save report to local file"
+      block:
+        - name: "Prepare comprehensive investigation report"
+          ansible.builtin.set_fact:
+            investigation_report:
+              hostname: "{{ ansible_hostname }}"
+              os_distribution: "{{ ansible_distribution }}"
+              os_version: "{{ ansible_distribution_version }}"
+              investigation_timestamp: "{{ ansible_date_time.iso8601 }}"
+              systemctl_available: "{{ 'Yes' if (systemctl_check is defined and systemctl_check.rc is defined and systemctl_check.rc == 0) else 'No' }}"
+              journalctl_available: "{{ 'Yes' if (journalctl_check is defined and journalctl_check.rc is defined and journalctl_check.rc == 0) else 'No' }}"
+              failed_units:
+                count: "{{ failed_units_count | default(0) | int }}"
+                list: "{{ failed_units.stdout_lines | default([]) if (failed_units is defined) else [] }}"
+                unit_names: "{{ failed_unit_names | default([]) if (failed_unit_names is defined) else [] }}"
+              detailed_analysis: "{{ unit_analysis.results | default([]) | map(attribute='stdout') | list if (unit_analysis is defined and (failed_units_count | default(0) | int) > 0) else [] }}"
+              analysis_summary:
+                all_healthy: "{{ 'Yes' if ((failed_units_count | default(0) | int) == 0) else 'No' }}"
+                recommendation: "{{ 'All systemd units are healthy. No action required.' if ((failed_units_count | default(0) | int) == 0) else 'Review failed units and their logs for remediation. Consider restarting failed units or investigating root causes.' }}"
+
+        - name: "Save investigation report to JSON file"
+          ansible.builtin.copy:
+            content: "{{ investigation_report | to_nice_json }}"
+            dest: "{{ report_path }}"
+            mode: '0644'
+          when: investigation_report is defined and report_path is defined
+
+        - name: "Display report file creation status"
+          ansible.builtin.debug:
+            msg:
+              - "Investigation report saved successfully"
+              - "Report location: {{ report_path }}"
+              - "Report format: JSON"
+          when: report_path is defined
+
+      rescue:
+        - name: "Handle report file creation failure"
+          ansible.builtin.debug:
+            msg: "Warning: Failed to save investigation report to file. Investigation data may still be available in Ansible output."
+          ignore_errors: true
+
+    # ========================================================================
+    # Task 5: Fetch Report to Control Node
+    # ========================================================================
+    - name: "Task 5: Fetch report to control node"
+      block:
+        - name: "Ensure reports directory exists on control node"
+          ansible.builtin.file:
+            path: "{{ report_dest_path }}"
+            state: directory
+            mode: '0755'
+          delegate_to: localhost
+          run_once: true
+          ignore_errors: true
+
+        - name: "Fetch report file to control node"
+          ansible.builtin.fetch:
+            src: "{{ report_path }}"
+            dest: "{{ report_dest_path }}"
+            flat: yes
+          when: report_path is defined
+          ignore_errors: true
+
+        - name: "Display report fetch status"
+          ansible.builtin.debug:
+            msg:
+              - "Report fetch completed"
+              - "Report location on control node: {{ report_dest_path }}{{ report_path | basename }}"
+          when: report_path is defined
+
+      rescue:
+        - name: "Handle report fetch failure"
+          ansible.builtin.debug:
+            msg: "Warning: Failed to fetch report to control node. Report is still available on target host at {{ report_path }}"
+          ignore_errors: true
+
+    # ========================================================================
+    # Final Report: Display Summary
+    # ========================================================================
+    - name: "Final report: Display summary"
+      ansible.builtin.debug:
+        msg:
+          - "=========================================="
+          - "Systemd Unit Deep Check Summary"
+          - "=========================================="
+          - "Host: {{ ansible_hostname }}"
+          - "OS: {{ ansible_distribution }} {{ ansible_distribution_version }}"
+          - "systemctl Available: {{ 'Yes' if (systemctl_check is defined and systemctl_check.rc is defined and systemctl_check.rc == 0) else 'No' }}"
+          - "journalctl Available: {{ 'Yes' if (journalctl_check is defined and journalctl_check.rc is defined and journalctl_check.rc == 0) else 'No' }}"
+          - "Failed Units Count: {{ failed_units_count | default(0) | int }}"
+          - "All Units Healthy: {{ 'Yes' if ((failed_units_count | default(0) | int) == 0) else 'No' }}"
+          - "Investigation Completed: Yes"
+          - "Report File: {{ report_path }}"
+          - "Report Location (Control Node): {{ report_dest_path }}{{ report_path | basename if report_path is defined else 'N/A' }}"
+          - "{{ 'Status: All systemd units are healthy. No action required.' if ((failed_units_count | default(0) | int) == 0) else 'Action Required: Review failed units and their logs for remediation.' }}"
+          - "=========================================="
+      tags:
+        - always
+

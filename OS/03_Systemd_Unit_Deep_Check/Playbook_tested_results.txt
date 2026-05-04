@@ -1,0 +1,306 @@
+[root@aap25 31_Systemd_Unit_Deep_Check]# ansible-playbook systemd_unit_deep_check_site.yml -i inventory
+
+PLAY [Play 1: Systemd Unit Deep Check and Analysis] ********************************************************************************************************************
+
+TASK [Gathering Facts] *************************************************************************************************************************************************
+ok: [Test-RHEL-7.9-3]
+ok: [TEST-RHEL-8.9-1]
+ok: [ansible25.example.com]
+
+TASK [Validate OS compatibility] ***************************************************************************************************************************************
+ok: [Test-RHEL-7.9-3] => {
+    "changed": false,
+    "msg": "OS compatibility check passed: RedHat 7"
+}
+ok: [TEST-RHEL-8.9-1] => {
+    "changed": false,
+    "msg": "OS compatibility check passed: RedHat 8"
+}
+ok: [ansible25.example.com] => {
+    "changed": false,
+    "msg": "OS compatibility check passed: RedHat 9"
+}
+
+TASK [Display OS information] ******************************************************************************************************************************************
+ok: [Test-RHEL-7.9-3] => {
+    "msg": [
+        "OS Distribution: RedHat",
+        "OS Version: 7.9",
+        "OS Major Version: 7",
+        "Hostname: test-rhel-7"
+    ]
+}
+ok: [TEST-RHEL-8.9-1] => {
+    "msg": [
+        "OS Distribution: RedHat",
+        "OS Version: 8.7",
+        "OS Major Version: 8",
+        "Hostname: TEST-RHEL-8"
+    ]
+}
+ok: [ansible25.example.com] => {
+    "msg": [
+        "OS Distribution: RedHat",
+        "OS Version: 9.4",
+        "OS Major Version: 9",
+        "Hostname: ansible25"
+    ]
+}
+
+TASK [Check systemctl command availability] ****************************************************************************************************************************
+ok: [Test-RHEL-7.9-3]
+ok: [ansible25.example.com]
+ok: [TEST-RHEL-8.9-1]
+
+TASK [Check journalctl command availability] ***************************************************************************************************************************
+ok: [Test-RHEL-7.9-3]
+ok: [ansible25.example.com]
+ok: [TEST-RHEL-8.9-1]
+
+TASK [Display systemd tools availability status] ***********************************************************************************************************************
+ok: [Test-RHEL-7.9-3] => {
+    "msg": [
+        "Prerequisites check completed",
+        "systemctl available: Yes",
+        "journalctl available: Yes"
+    ]
+}
+ok: [TEST-RHEL-8.9-1] => {
+    "msg": [
+        "Prerequisites check completed",
+        "systemctl available: Yes",
+        "journalctl available: Yes"
+    ]
+}
+ok: [ansible25.example.com] => {
+    "msg": [
+        "Prerequisites check completed",
+        "systemctl available: Yes",
+        "journalctl available: Yes"
+    ]
+}
+
+TASK [List failed systemd units] ***************************************************************************************************************************************
+ok: [Test-RHEL-7.9-3]
+ok: [ansible25.example.com]
+ok: [TEST-RHEL-8.9-1]
+
+TASK [Set empty failed units list when systemctl not available] ********************************************************************************************************
+skipping: [Test-RHEL-7.9-3]
+skipping: [TEST-RHEL-8.9-1]
+skipping: [ansible25.example.com]
+
+TASK [Count failed units] **********************************************************************************************************************************************
+ok: [Test-RHEL-7.9-3]
+ok: [TEST-RHEL-8.9-1]
+ok: [ansible25.example.com]
+
+TASK [Display failed units detection status] ***************************************************************************************************************************
+ok: [Test-RHEL-7.9-3] => {
+    "msg": [
+        "Failed systemd units detection completed",
+        "Failed units found: 0",
+        "No failed units found. All systemd units are healthy."
+    ]
+}
+ok: [TEST-RHEL-8.9-1] => {
+    "msg": [
+        "Failed systemd units detection completed",
+        "Failed units found: 2",
+        "Failed units detected. Investigation will continue."
+    ]
+}
+ok: [ansible25.example.com] => {
+    "msg": [
+        "Failed systemd units detection completed",
+        "Failed units found: 0",
+        "No failed units found. All systemd units are healthy."
+    ]
+}
+
+TASK [Extract unit names from failed units list] ***********************************************************************************************************************
+skipping: [Test-RHEL-7.9-3]
+ok: [TEST-RHEL-8.9-1]
+skipping: [ansible25.example.com]
+
+TASK [Get detailed status and logs for each failed unit] ***************************************************************************************************************
+skipping: [Test-RHEL-7.9-3]
+skipping: [ansible25.example.com]
+ok: [TEST-RHEL-8.9-1] => (item=alertmanager.service)
+ok: [TEST-RHEL-8.9-1] => (item=insights-client.service)
+
+TASK [Display unit analysis status] ************************************************************************************************************************************
+skipping: [Test-RHEL-7.9-3]
+ok: [TEST-RHEL-8.9-1] => {
+    "msg": [
+        "Unit analysis completed",
+        "Analyzed 2 failed unit(s)"
+    ]
+}
+skipping: [ansible25.example.com]
+
+TASK [Display message when no failed units] ****************************************************************************************************************************
+ok: [Test-RHEL-7.9-3] => {
+    "msg": "No failed units detected. Skipping detailed analysis."
+}
+skipping: [TEST-RHEL-8.9-1]
+ok: [ansible25.example.com] => {
+    "msg": "No failed units detected. Skipping detailed analysis."
+}
+
+TASK [Display detailed analysis for each failed unit] ******************************************************************************************************************
+skipping: [Test-RHEL-7.9-3]
+skipping: [ansible25.example.com]
+ok: [TEST-RHEL-8.9-1] => (item={'changed': False, 'stdout': "==========================================\nAnalysis for Unit: alertmanager.service\n==========================================\n\n--- Unit Status ---\n● alertmanager.service\n   Loaded: loaded (/etc/systemd/system/alertmanager.service; enabled; vendor preset: disabled)\n   Active: failed (Result: exit-code) since Tue 2025-07-22 21:34:09 CST; 6 months 16 days ago\n Main PID: 1140 (code=exited, status=203/EXEC)\n\nJul 22 21:34:09 TEST-RHEL-8.9-1 systemd[1]: alertmanager.service: Service RestartSec=100ms expired, scheduling restart.\nJul 22 21:34:09 TEST-RHEL-8.9-1 systemd[1]: alertmanager.service: Scheduled restart job, restart counter is at 5.\nJul 22 21:34:09 TEST-RHEL-8.9-1 systemd[1]: Stopped alertmanager.service.\nJul 22 21:34:09 TEST-RHEL-8.9-1 systemd[1]: alertmanager.service: Start request repeated too quickly.\nJul 22 21:34:09 TEST-RHEL-8.9-1 systemd[1]: alertmanager.service: Failed with result 'exit-code'.\nJul 22 21:34:09 TEST-RHEL-8.9-1 systemd[1]: Failed to start alertmanager.service.\nUnable to retrieve status for alertmanager.service\n\n--- Recent Logs (last 20 lines) ---\n-- Logs begin at Tue 2025-07-22 13:36:30 CST, end at Fri 2026-02-06 21:57:46 CST. --\nJul 22 21:34:09 TEST-RHEL-8.9-1 systemd[1]: alertmanager.service: Main process exited, code=exited, status=203/EXEC\nJul 22 21:34:09 TEST-RHEL-8.9-1 systemd[1]: alertmanager.service: Failed with result 'exit-code'.\nJul 22 21:34:09 TEST-RHEL-8.9-1 systemd[1]: alertmanager.service: Service RestartSec=100ms expired, scheduling restart.\nJul 22 21:34:09 TEST-RHEL-8.9-1 systemd[1]: alertmanager.service: Scheduled restart job, restart counter is at 3.\nJul 22 21:34:09 TEST-RHEL-8.9-1 systemd[1]: Stopped alertmanager.service.\nJul 22 21:34:09 TEST-RHEL-8.9-1 systemd[1]: Started alertmanager.service.\nJul 22 21:34:09 TEST-RHEL-8.9-1 systemd[1]: alertmanager.service: Main process exited, code=exited, status=203/EXEC\nJul 22 21:34:09 TEST-RHEL-8.9-1 systemd[1]: alertmanager.service: Failed with result 'exit-code'.\nJul 22 21:34:09 TEST-RHEL-8.9-1 systemd[1]: alertmanager.service: Service RestartSec=100ms expired, scheduling restart.\nJul 22 21:34:09 TEST-RHEL-8.9-1 systemd[1]: alertmanager.service: Scheduled restart job, restart counter is at 4.\nJul 22 21:34:09 TEST-RHEL-8.9-1 systemd[1]: Stopped alertmanager.service.\nJul 22 21:34:09 TEST-RHEL-8.9-1 systemd[1]: Started alertmanager.service.\nJul 22 21:34:09 TEST-RHEL-8.9-1 systemd[1]: alertmanager.service: Main process exited, code=exited, status=203/EXEC\nJul 22 21:34:09 TEST-RHEL-8.9-1 systemd[1]: alertmanager.service: Failed with result 'exit-code'.\nJul 22 21:34:09 TEST-RHEL-8.9-1 systemd[1]: alertmanager.service: Service RestartSec=100ms expired, scheduling restart.\nJul 22 21:34:09 TEST-RHEL-8.9-1 systemd[1]: alertmanager.service: Scheduled restart job, restart counter is at 5.\nJul 22 21:34:09 TEST-RHEL-8.9-1 systemd[1]: Stopped alertmanager.service.\nJul 22 21:34:09 TEST-RHEL-8.9-1 systemd[1]: alertmanager.service: Start request repeated too quickly.\nJul 22 21:34:09 TEST-RHEL-8.9-1 systemd[1]: alertmanager.service: Failed with result 'exit-code'.\nJul 22 21:34:09 TEST-RHEL-8.9-1 systemd[1]: Failed to start alertmanager.service.\n==========================================", 'stderr': '', 'rc': 0, 'cmd': 'UNIT_NAME="alertmanager.service"\necho "=========================================="\necho "Analysis for Unit: $UNIT_NAME"\necho "=========================================="\necho ""\necho "--- Unit Status ---"\nsystemctl status "$UNIT_NAME" || echo "Unable to retrieve status for $UNIT_NAME"\necho ""\necho "--- Recent Logs (last 20 lines) ---"\njournalctl -u "$UNIT_NAME" -n 20 --no-pager || echo "Unable to retrieve logs for $UNIT_NAME"\necho "=========================================="\n', 'start': '2026-02-06 21:57:46.599376', 'end': '2026-02-06 21:57:46.637327', 'delta': '0:00:00.037951', 'msg': '', 'invocation': {'module_args': {'_raw_params': 'UNIT_NAME="alertmanager.service"\necho "=========================================="\necho "Analysis for Unit: $UNIT_NAME"\necho "=========================================="\necho ""\necho "--- Unit Status ---"\nsystemctl status "$UNIT_NAME" || echo "Unable to retrieve status for $UNIT_NAME"\necho ""\necho "--- Recent Logs (last 20 lines) ---"\njournalctl -u "$UNIT_NAME" -n 20 --no-pager || echo "Unable to retrieve logs for $UNIT_NAME"\necho "=========================================="\n', '_uses_shell': True, 'expand_argument_vars': True, 'stdin_add_newline': True, 'strip_empty_ends': True, 'argv': None, 'chdir': None, 'executable': None, 'creates': None, 'removes': None, 'stdin': None}}, 'stdout_lines': ['==========================================', 'Analysis for Unit: alertmanager.service', '==========================================', '', '--- Unit Status ---', '● alertmanager.service', '   Loaded: loaded (/etc/systemd/system/alertmanager.service; enabled; vendor preset: disabled)', '   Active: failed (Result: exit-code) since Tue 2025-07-22 21:34:09 CST; 6 months 16 days ago', ' Main PID: 1140 (code=exited, status=203/EXEC)', '', 'Jul 22 21:34:09 TEST-RHEL-8.9-1 systemd[1]: alertmanager.service: Service RestartSec=100ms expired, scheduling restart.', 'Jul 22 21:34:09 TEST-RHEL-8.9-1 systemd[1]: alertmanager.service: Scheduled restart job, restart counter is at 5.', 'Jul 22 21:34:09 TEST-RHEL-8.9-1 systemd[1]: Stopped alertmanager.service.', 'Jul 22 21:34:09 TEST-RHEL-8.9-1 systemd[1]: alertmanager.service: Start request repeated too quickly.', "Jul 22 21:34:09 TEST-RHEL-8.9-1 systemd[1]: alertmanager.service: Failed with result 'exit-code'.", 'Jul 22 21:34:09 TEST-RHEL-8.9-1 systemd[1]: Failed to start alertmanager.service.', 'Unable to retrieve status for alertmanager.service', '', '--- Recent Logs (last 20 lines) ---', '-- Logs begin at Tue 2025-07-22 13:36:30 CST, end at Fri 2026-02-06 21:57:46 CST. --', 'Jul 22 21:34:09 TEST-RHEL-8.9-1 systemd[1]: alertmanager.service: Main process exited, code=exited, status=203/EXEC', "Jul 22 21:34:09 TEST-RHEL-8.9-1 systemd[1]: alertmanager.service: Failed with result 'exit-code'.", 'Jul 22 21:34:09 TEST-RHEL-8.9-1 systemd[1]: alertmanager.service: Service RestartSec=100ms expired, scheduling restart.', 'Jul 22 21:34:09 TEST-RHEL-8.9-1 systemd[1]: alertmanager.service: Scheduled restart job, restart counter is at 3.', 'Jul 22 21:34:09 TEST-RHEL-8.9-1 systemd[1]: Stopped alertmanager.service.', 'Jul 22 21:34:09 TEST-RHEL-8.9-1 systemd[1]: Started alertmanager.service.', 'Jul 22 21:34:09 TEST-RHEL-8.9-1 systemd[1]: alertmanager.service: Main process exited, code=exited, status=203/EXEC', "Jul 22 21:34:09 TEST-RHEL-8.9-1 systemd[1]: alertmanager.service: Failed with result 'exit-code'.", 'Jul 22 21:34:09 TEST-RHEL-8.9-1 systemd[1]: alertmanager.service: Service RestartSec=100ms expired, scheduling restart.', 'Jul 22 21:34:09 TEST-RHEL-8.9-1 systemd[1]: alertmanager.service: Scheduled restart job, restart counter is at 4.', 'Jul 22 21:34:09 TEST-RHEL-8.9-1 systemd[1]: Stopped alertmanager.service.', 'Jul 22 21:34:09 TEST-RHEL-8.9-1 systemd[1]: Started alertmanager.service.', 'Jul 22 21:34:09 TEST-RHEL-8.9-1 systemd[1]: alertmanager.service: Main process exited, code=exited, status=203/EXEC', "Jul 22 21:34:09 TEST-RHEL-8.9-1 systemd[1]: alertmanager.service: Failed with result 'exit-code'.", 'Jul 22 21:34:09 TEST-RHEL-8.9-1 systemd[1]: alertmanager.service: Service RestartSec=100ms expired, scheduling restart.', 'Jul 22 21:34:09 TEST-RHEL-8.9-1 systemd[1]: alertmanager.service: Scheduled restart job, restart counter is at 5.', 'Jul 22 21:34:09 TEST-RHEL-8.9-1 systemd[1]: Stopped alertmanager.service.', 'Jul 22 21:34:09 TEST-RHEL-8.9-1 systemd[1]: alertmanager.service: Start request repeated too quickly.', "Jul 22 21:34:09 TEST-RHEL-8.9-1 systemd[1]: alertmanager.service: Failed with result 'exit-code'.", 'Jul 22 21:34:09 TEST-RHEL-8.9-1 systemd[1]: Failed to start alertmanager.service.', '=========================================='], 'stderr_lines': [], 'failed': False, 'failed_when_result': False, 'item': 'alertmanager.service', 'ansible_loop_var': 'item'}) => {
+    "msg": "==========================================\nAnalysis for Unit: alertmanager.service\n==========================================\n\n--- Unit Status ---\n● alertmanager.service\n   Loaded: loaded (/etc/systemd/system/alertmanager.service; enabled; vendor preset: disabled)\n   Active: failed (Result: exit-code) since Tue 2025-07-22 21:34:09 CST; 6 months 16 days ago\n Main PID: 1140 (code=exited, status=203/EXEC)\n\nJul 22 21:34:09 TEST-RHEL-8.9-1 systemd[1]: alertmanager.service: Service RestartSec=100ms expired, scheduling restart.\nJul 22 21:34:09 TEST-RHEL-8.9-1 systemd[1]: alertmanager.service: Scheduled restart job, restart counter is at 5.\nJul 22 21:34:09 TEST-RHEL-8.9-1 systemd[1]: Stopped alertmanager.service.\nJul 22 21:34:09 TEST-RHEL-8.9-1 systemd[1]: alertmanager.service: Start request repeated too quickly.\nJul 22 21:34:09 TEST-RHEL-8.9-1 systemd[1]: alertmanager.service: Failed with result 'exit-code'.\nJul 22 21:34:09 TEST-RHEL-8.9-1 systemd[1]: Failed to start alertmanager.service.\nUnable to retrieve status for alertmanager.service\n\n--- Recent Logs (last 20 lines) ---\n-- Logs begin at Tue 2025-07-22 13:36:30 CST, end at Fri 2026-02-06 21:57:46 CST. --\nJul 22 21:34:09 TEST-RHEL-8.9-1 systemd[1]: alertmanager.service: Main process exited, code=exited, status=203/EXEC\nJul 22 21:34:09 TEST-RHEL-8.9-1 systemd[1]: alertmanager.service: Failed with result 'exit-code'.\nJul 22 21:34:09 TEST-RHEL-8.9-1 systemd[1]: alertmanager.service: Service RestartSec=100ms expired, scheduling restart.\nJul 22 21:34:09 TEST-RHEL-8.9-1 systemd[1]: alertmanager.service: Scheduled restart job, restart counter is at 3.\nJul 22 21:34:09 TEST-RHEL-8.9-1 systemd[1]: Stopped alertmanager.service.\nJul 22 21:34:09 TEST-RHEL-8.9-1 systemd[1]: Started alertmanager.service.\nJul 22 21:34:09 TEST-RHEL-8.9-1 systemd[1]: alertmanager.service: Main process exited, code=exited, status=203/EXEC\nJul 22 21:34:09 TEST-RHEL-8.9-1 systemd[1]: alertmanager.service: Failed with result 'exit-code'.\nJul 22 21:34:09 TEST-RHEL-8.9-1 systemd[1]: alertmanager.service: Service RestartSec=100ms expired, scheduling restart.\nJul 22 21:34:09 TEST-RHEL-8.9-1 systemd[1]: alertmanager.service: Scheduled restart job, restart counter is at 4.\nJul 22 21:34:09 TEST-RHEL-8.9-1 systemd[1]: Stopped alertmanager.service.\nJul 22 21:34:09 TEST-RHEL-8.9-1 systemd[1]: Started alertmanager.service.\nJul 22 21:34:09 TEST-RHEL-8.9-1 systemd[1]: alertmanager.service: Main process exited, code=exited, status=203/EXEC\nJul 22 21:34:09 TEST-RHEL-8.9-1 systemd[1]: alertmanager.service: Failed with result 'exit-code'.\nJul 22 21:34:09 TEST-RHEL-8.9-1 systemd[1]: alertmanager.service: Service RestartSec=100ms expired, scheduling restart.\nJul 22 21:34:09 TEST-RHEL-8.9-1 systemd[1]: alertmanager.service: Scheduled restart job, restart counter is at 5.\nJul 22 21:34:09 TEST-RHEL-8.9-1 systemd[1]: Stopped alertmanager.service.\nJul 22 21:34:09 TEST-RHEL-8.9-1 systemd[1]: alertmanager.service: Start request repeated too quickly.\nJul 22 21:34:09 TEST-RHEL-8.9-1 systemd[1]: alertmanager.service: Failed with result 'exit-code'.\nJul 22 21:34:09 TEST-RHEL-8.9-1 systemd[1]: Failed to start alertmanager.service.\n=========================================="
+}
+ok: [TEST-RHEL-8.9-1] => (item={'changed': False, 'stdout': "==========================================\nAnalysis for Unit: insights-client.service\n==========================================\n\n--- Unit Status ---\n● insights-client.service - Insights Client\n   Loaded: loaded (/usr/lib/systemd/system/insights-client.service; static; vendor preset: disabled)\n   Active: failed (Result: exit-code) since Fri 2026-02-06 00:42:47 CST; 21h ago\n     Docs: man:insights-client(8)\n  Process: 3069164 ExecStart=/usr/bin/insights-client --retry 3 (code=exited, status=1/FAILURE)\n Main PID: 3069164 (code=exited, status=1/FAILURE)\n\nFeb 06 00:42:21 TEST-RHEL-8.9-1 systemd[1]: Started Insights Client.\nFeb 06 00:42:47 TEST-RHEL-8.9-1 insights-client[3069228]: This machine has not yet been registered. Use --register to register this machine.\nFeb 06 00:42:47 TEST-RHEL-8.9-1 systemd[1]: insights-client.service: Main process exited, code=exited, status=1/FAILURE\nFeb 06 00:42:47 TEST-RHEL-8.9-1 systemd[1]: insights-client.service: Failed with result 'exit-code'.\nUnable to retrieve status for insights-client.service\n\n--- Recent Logs (last 20 lines) ---\n-- Logs begin at Tue 2025-07-22 13:36:30 CST, end at Fri 2026-02-06 21:57:50 CST. --\nFeb 02 00:34:43 TEST-RHEL-8.9-1 systemd[1]: Started Insights Client.\nFeb 02 00:35:03 TEST-RHEL-8.9-1 insights-client[2942066]: This machine has not yet been registered. Use --register to register this machine.\nFeb 02 00:35:03 TEST-RHEL-8.9-1 systemd[1]: insights-client.service: Main process exited, code=exited, status=1/FAILURE\nFeb 02 00:35:03 TEST-RHEL-8.9-1 systemd[1]: insights-client.service: Failed with result 'exit-code'.\nFeb 03 01:32:15 TEST-RHEL-8.9-1 systemd[1]: Started Insights Client.\nFeb 03 01:32:37 TEST-RHEL-8.9-1 insights-client[2962634]: This machine has not yet been registered. Use --register to register this machine.\nFeb 03 01:32:37 TEST-RHEL-8.9-1 systemd[1]: insights-client.service: Main process exited, code=exited, status=1/FAILURE\nFeb 03 01:32:37 TEST-RHEL-8.9-1 systemd[1]: insights-client.service: Failed with result 'exit-code'.\nFeb 04 02:50:43 TEST-RHEL-8.9-1 systemd[1]: Started Insights Client.\nFeb 04 02:51:06 TEST-RHEL-8.9-1 insights-client[3023480]: This machine has not yet been registered. Use --register to register this machine.\nFeb 04 02:51:06 TEST-RHEL-8.9-1 systemd[1]: insights-client.service: Main process exited, code=exited, status=1/FAILURE\nFeb 04 02:51:06 TEST-RHEL-8.9-1 systemd[1]: insights-client.service: Failed with result 'exit-code'.\nFeb 05 02:24:05 TEST-RHEL-8.9-1 systemd[1]: Started Insights Client.\nFeb 05 02:24:28 TEST-RHEL-8.9-1 insights-client[3053057]: This machine has not yet been registered. Use --register to register this machine.\nFeb 05 02:24:29 TEST-RHEL-8.9-1 systemd[1]: insights-client.service: Main process exited, code=exited, status=1/FAILURE\nFeb 05 02:24:29 TEST-RHEL-8.9-1 systemd[1]: insights-client.service: Failed with result 'exit-code'.\nFeb 06 00:42:21 TEST-RHEL-8.9-1 systemd[1]: Started Insights Client.\nFeb 06 00:42:47 TEST-RHEL-8.9-1 insights-client[3069228]: This machine has not yet been registered. Use --register to register this machine.\nFeb 06 00:42:47 TEST-RHEL-8.9-1 systemd[1]: insights-client.service: Main process exited, code=exited, status=1/FAILURE\nFeb 06 00:42:47 TEST-RHEL-8.9-1 systemd[1]: insights-client.service: Failed with result 'exit-code'.\n==========================================", 'stderr': '', 'rc': 0, 'cmd': 'UNIT_NAME="insights-client.service"\necho "=========================================="\necho "Analysis for Unit: $UNIT_NAME"\necho "=========================================="\necho ""\necho "--- Unit Status ---"\nsystemctl status "$UNIT_NAME" || echo "Unable to retrieve status for $UNIT_NAME"\necho ""\necho "--- Recent Logs (last 20 lines) ---"\njournalctl -u "$UNIT_NAME" -n 20 --no-pager || echo "Unable to retrieve logs for $UNIT_NAME"\necho "=========================================="\n', 'start': '2026-02-06 21:57:50.110855', 'end': '2026-02-06 21:57:50.155159', 'delta': '0:00:00.044304', 'msg': '', 'invocation': {'module_args': {'_raw_params': 'UNIT_NAME="insights-client.service"\necho "=========================================="\necho "Analysis for Unit: $UNIT_NAME"\necho "=========================================="\necho ""\necho "--- Unit Status ---"\nsystemctl status "$UNIT_NAME" || echo "Unable to retrieve status for $UNIT_NAME"\necho ""\necho "--- Recent Logs (last 20 lines) ---"\njournalctl -u "$UNIT_NAME" -n 20 --no-pager || echo "Unable to retrieve logs for $UNIT_NAME"\necho "=========================================="\n', '_uses_shell': True, 'expand_argument_vars': True, 'stdin_add_newline': True, 'strip_empty_ends': True, 'argv': None, 'chdir': None, 'executable': None, 'creates': None, 'removes': None, 'stdin': None}}, 'stdout_lines': ['==========================================', 'Analysis for Unit: insights-client.service', '==========================================', '', '--- Unit Status ---', '● insights-client.service - Insights Client', '   Loaded: loaded (/usr/lib/systemd/system/insights-client.service; static; vendor preset: disabled)', '   Active: failed (Result: exit-code) since Fri 2026-02-06 00:42:47 CST; 21h ago', '     Docs: man:insights-client(8)', '  Process: 3069164 ExecStart=/usr/bin/insights-client --retry 3 (code=exited, status=1/FAILURE)', ' Main PID: 3069164 (code=exited, status=1/FAILURE)', '', 'Feb 06 00:42:21 TEST-RHEL-8.9-1 systemd[1]: Started Insights Client.', 'Feb 06 00:42:47 TEST-RHEL-8.9-1 insights-client[3069228]: This machine has not yet been registered. Use --register to register this machine.', 'Feb 06 00:42:47 TEST-RHEL-8.9-1 systemd[1]: insights-client.service: Main process exited, code=exited, status=1/FAILURE', "Feb 06 00:42:47 TEST-RHEL-8.9-1 systemd[1]: insights-client.service: Failed with result 'exit-code'.", 'Unable to retrieve status for insights-client.service', '', '--- Recent Logs (last 20 lines) ---', '-- Logs begin at Tue 2025-07-22 13:36:30 CST, end at Fri 2026-02-06 21:57:50 CST. --', 'Feb 02 00:34:43 TEST-RHEL-8.9-1 systemd[1]: Started Insights Client.', 'Feb 02 00:35:03 TEST-RHEL-8.9-1 insights-client[2942066]: This machine has not yet been registered. Use --register to register this machine.', 'Feb 02 00:35:03 TEST-RHEL-8.9-1 systemd[1]: insights-client.service: Main process exited, code=exited, status=1/FAILURE', "Feb 02 00:35:03 TEST-RHEL-8.9-1 systemd[1]: insights-client.service: Failed with result 'exit-code'.", 'Feb 03 01:32:15 TEST-RHEL-8.9-1 systemd[1]: Started Insights Client.', 'Feb 03 01:32:37 TEST-RHEL-8.9-1 insights-client[2962634]: This machine has not yet been registered. Use --register to register this machine.', 'Feb 03 01:32:37 TEST-RHEL-8.9-1 systemd[1]: insights-client.service: Main process exited, code=exited, status=1/FAILURE', "Feb 03 01:32:37 TEST-RHEL-8.9-1 systemd[1]: insights-client.service: Failed with result 'exit-code'.", 'Feb 04 02:50:43 TEST-RHEL-8.9-1 systemd[1]: Started Insights Client.', 'Feb 04 02:51:06 TEST-RHEL-8.9-1 insights-client[3023480]: This machine has not yet been registered. Use --register to register this machine.', 'Feb 04 02:51:06 TEST-RHEL-8.9-1 systemd[1]: insights-client.service: Main process exited, code=exited, status=1/FAILURE', "Feb 04 02:51:06 TEST-RHEL-8.9-1 systemd[1]: insights-client.service: Failed with result 'exit-code'.", 'Feb 05 02:24:05 TEST-RHEL-8.9-1 systemd[1]: Started Insights Client.', 'Feb 05 02:24:28 TEST-RHEL-8.9-1 insights-client[3053057]: This machine has not yet been registered. Use --register to register this machine.', 'Feb 05 02:24:29 TEST-RHEL-8.9-1 systemd[1]: insights-client.service: Main process exited, code=exited, status=1/FAILURE', "Feb 05 02:24:29 TEST-RHEL-8.9-1 systemd[1]: insights-client.service: Failed with result 'exit-code'.", 'Feb 06 00:42:21 TEST-RHEL-8.9-1 systemd[1]: Started Insights Client.', 'Feb 06 00:42:47 TEST-RHEL-8.9-1 insights-client[3069228]: This machine has not yet been registered. Use --register to register this machine.', 'Feb 06 00:42:47 TEST-RHEL-8.9-1 systemd[1]: insights-client.service: Main process exited, code=exited, status=1/FAILURE', "Feb 06 00:42:47 TEST-RHEL-8.9-1 systemd[1]: insights-client.service: Failed with result 'exit-code'.", '=========================================='], 'stderr_lines': [], 'failed': False, 'failed_when_result': False, 'item': 'insights-client.service', 'ansible_loop_var': 'item'}) => {
+    "msg": "==========================================\nAnalysis for Unit: insights-client.service\n==========================================\n\n--- Unit Status ---\n● insights-client.service - Insights Client\n   Loaded: loaded (/usr/lib/systemd/system/insights-client.service; static; vendor preset: disabled)\n   Active: failed (Result: exit-code) since Fri 2026-02-06 00:42:47 CST; 21h ago\n     Docs: man:insights-client(8)\n  Process: 3069164 ExecStart=/usr/bin/insights-client --retry 3 (code=exited, status=1/FAILURE)\n Main PID: 3069164 (code=exited, status=1/FAILURE)\n\nFeb 06 00:42:21 TEST-RHEL-8.9-1 systemd[1]: Started Insights Client.\nFeb 06 00:42:47 TEST-RHEL-8.9-1 insights-client[3069228]: This machine has not yet been registered. Use --register to register this machine.\nFeb 06 00:42:47 TEST-RHEL-8.9-1 systemd[1]: insights-client.service: Main process exited, code=exited, status=1/FAILURE\nFeb 06 00:42:47 TEST-RHEL-8.9-1 systemd[1]: insights-client.service: Failed with result 'exit-code'.\nUnable to retrieve status for insights-client.service\n\n--- Recent Logs (last 20 lines) ---\n-- Logs begin at Tue 2025-07-22 13:36:30 CST, end at Fri 2026-02-06 21:57:50 CST. --\nFeb 02 00:34:43 TEST-RHEL-8.9-1 systemd[1]: Started Insights Client.\nFeb 02 00:35:03 TEST-RHEL-8.9-1 insights-client[2942066]: This machine has not yet been registered. Use --register to register this machine.\nFeb 02 00:35:03 TEST-RHEL-8.9-1 systemd[1]: insights-client.service: Main process exited, code=exited, status=1/FAILURE\nFeb 02 00:35:03 TEST-RHEL-8.9-1 systemd[1]: insights-client.service: Failed with result 'exit-code'.\nFeb 03 01:32:15 TEST-RHEL-8.9-1 systemd[1]: Started Insights Client.\nFeb 03 01:32:37 TEST-RHEL-8.9-1 insights-client[2962634]: This machine has not yet been registered. Use --register to register this machine.\nFeb 03 01:32:37 TEST-RHEL-8.9-1 systemd[1]: insights-client.service: Main process exited, code=exited, status=1/FAILURE\nFeb 03 01:32:37 TEST-RHEL-8.9-1 systemd[1]: insights-client.service: Failed with result 'exit-code'.\nFeb 04 02:50:43 TEST-RHEL-8.9-1 systemd[1]: Started Insights Client.\nFeb 04 02:51:06 TEST-RHEL-8.9-1 insights-client[3023480]: This machine has not yet been registered. Use --register to register this machine.\nFeb 04 02:51:06 TEST-RHEL-8.9-1 systemd[1]: insights-client.service: Main process exited, code=exited, status=1/FAILURE\nFeb 04 02:51:06 TEST-RHEL-8.9-1 systemd[1]: insights-client.service: Failed with result 'exit-code'.\nFeb 05 02:24:05 TEST-RHEL-8.9-1 systemd[1]: Started Insights Client.\nFeb 05 02:24:28 TEST-RHEL-8.9-1 insights-client[3053057]: This machine has not yet been registered. Use --register to register this machine.\nFeb 05 02:24:29 TEST-RHEL-8.9-1 systemd[1]: insights-client.service: Main process exited, code=exited, status=1/FAILURE\nFeb 05 02:24:29 TEST-RHEL-8.9-1 systemd[1]: insights-client.service: Failed with result 'exit-code'.\nFeb 06 00:42:21 TEST-RHEL-8.9-1 systemd[1]: Started Insights Client.\nFeb 06 00:42:47 TEST-RHEL-8.9-1 insights-client[3069228]: This machine has not yet been registered. Use --register to register this machine.\nFeb 06 00:42:47 TEST-RHEL-8.9-1 systemd[1]: insights-client.service: Main process exited, code=exited, status=1/FAILURE\nFeb 06 00:42:47 TEST-RHEL-8.9-1 systemd[1]: insights-client.service: Failed with result 'exit-code'.\n=========================================="
+}
+
+TASK [Display summary when no failed units] ****************************************************************************************************************************
+ok: [Test-RHEL-7.9-3] => {
+    "msg": [
+        "==========================================",
+        "Systemd Unit Health Check Summary",
+        "==========================================",
+        "Host: test-rhel-7",
+        "Status: All systemd units are in a healthy state.",
+        "Failed Units: 0",
+        "=========================================="
+    ]
+}
+skipping: [TEST-RHEL-8.9-1]
+ok: [ansible25.example.com] => {
+    "msg": [
+        "==========================================",
+        "Systemd Unit Health Check Summary",
+        "==========================================",
+        "Host: ansible25",
+        "Status: All systemd units are in a healthy state.",
+        "Failed Units: 0",
+        "=========================================="
+    ]
+}
+
+TASK [Prepare comprehensive investigation report] **********************************************************************************************************************
+ok: [Test-RHEL-7.9-3]
+ok: [TEST-RHEL-8.9-1]
+ok: [ansible25.example.com]
+
+TASK [Save investigation report to JSON file] **************************************************************************************************************************
+changed: [Test-RHEL-7.9-3]
+changed: [TEST-RHEL-8.9-1]
+changed: [ansible25.example.com]
+
+TASK [Display report file creation status] *****************************************************************************************************************************
+ok: [Test-RHEL-7.9-3] => {
+    "msg": [
+        "Investigation report saved successfully",
+        "Report location: /tmp/systemd_unit_investigation_test-rhel-7.json",
+        "Report format: JSON"
+    ]
+}
+ok: [TEST-RHEL-8.9-1] => {
+    "msg": [
+        "Investigation report saved successfully",
+        "Report location: /tmp/systemd_unit_investigation_TEST-RHEL-8.json",
+        "Report format: JSON"
+    ]
+}
+ok: [ansible25.example.com] => {
+    "msg": [
+        "Investigation report saved successfully",
+        "Report location: /tmp/systemd_unit_investigation_ansible25.json",
+        "Report format: JSON"
+    ]
+}
+
+TASK [Ensure reports directory exists on control node] *****************************************************************************************************************
+changed: [Test-RHEL-7.9-3 -> localhost]
+
+TASK [Fetch report file to control node] *******************************************************************************************************************************
+changed: [Test-RHEL-7.9-3]
+changed: [ansible25.example.com]
+changed: [TEST-RHEL-8.9-1]
+
+TASK [Display report fetch status] *************************************************************************************************************************************
+ok: [Test-RHEL-7.9-3] => {
+    "msg": [
+        "Report fetch completed",
+        "Report location on control node: ./reports/systemd_unit_investigation_test-rhel-7.json"
+    ]
+}
+ok: [TEST-RHEL-8.9-1] => {
+    "msg": [
+        "Report fetch completed",
+        "Report location on control node: ./reports/systemd_unit_investigation_TEST-RHEL-8.json"
+    ]
+}
+ok: [ansible25.example.com] => {
+    "msg": [
+        "Report fetch completed",
+        "Report location on control node: ./reports/systemd_unit_investigation_ansible25.json"
+    ]
+}
+
+TASK [Final report: Display summary] ***********************************************************************************************************************************
+ok: [Test-RHEL-7.9-3] => {
+    "msg": [
+        "==========================================",
+        "Systemd Unit Deep Check Summary",
+        "==========================================",
+        "Host: test-rhel-7",
+        "OS: RedHat 7.9",
+        "systemctl Available: Yes",
+        "journalctl Available: Yes",
+        "Failed Units Count: 0",
+        "All Units Healthy: Yes",
+        "Investigation Completed: Yes",
+        "Report File: /tmp/systemd_unit_investigation_test-rhel-7.json",
+        "Report Location (Control Node): ./reports/systemd_unit_investigation_test-rhel-7.json",
+        "Status: All systemd units are healthy. No action required.",
+        "=========================================="
+    ]
+}
+ok: [TEST-RHEL-8.9-1] => {
+    "msg": [
+        "==========================================",
+        "Systemd Unit Deep Check Summary",
+        "==========================================",
+        "Host: TEST-RHEL-8",
+        "OS: RedHat 8.7",
+        "systemctl Available: Yes",
+        "journalctl Available: Yes",
+        "Failed Units Count: 2",
+        "All Units Healthy: No",
+        "Investigation Completed: Yes",
+        "Report File: /tmp/systemd_unit_investigation_TEST-RHEL-8.json",
+        "Report Location (Control Node): ./reports/systemd_unit_investigation_TEST-RHEL-8.json",
+        "Action Required: Review failed units and their logs for remediation.",
+        "=========================================="
+    ]
+}
+ok: [ansible25.example.com] => {
+    "msg": [
+        "==========================================",
+        "Systemd Unit Deep Check Summary",
+        "==========================================",
+        "Host: ansible25",
+        "OS: RedHat 9.4",
+        "systemctl Available: Yes",
+        "journalctl Available: Yes",
+        "Failed Units Count: 0",
+        "All Units Healthy: Yes",
+        "Investigation Completed: Yes",
+        "Report File: /tmp/systemd_unit_investigation_ansible25.json",
+        "Report Location (Control Node): ./reports/systemd_unit_investigation_ansible25.json",
+        "Status: All systemd units are healthy. No action required.",
+        "=========================================="
+    ]
+}
+
+PLAY RECAP *************************************************************************************************************************************************************
+TEST-RHEL-8.9-1            : ok=19   changed=2    unreachable=0    failed=0    skipped=3    rescued=0    ignored=0
+Test-RHEL-7.9-3            : ok=18   changed=3    unreachable=0    failed=0    skipped=5    rescued=0    ignored=0
+ansible25.example.com      : ok=17   changed=2    unreachable=0    failed=0    skipped=5    rescued=0    ignored=0

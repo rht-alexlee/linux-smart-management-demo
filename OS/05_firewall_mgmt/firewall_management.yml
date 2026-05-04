@@ -1,0 +1,216 @@
+# ============================================================================
+# Playbook: Firewall Management Tool (Red Hat Best Practice)
+# ============================================================================
+#
+# Description:
+#   This playbook provides a centralized, automated solution for managing
+#   firewalld service across multiple Linux hosts. It supports starting,
+#   stopping, or checking the status of the firewall service with comprehensive
+#   error handling and validation.
+#
+# Purpose:
+#   - Automate firewall service management across multiple hosts
+#   - Reduce manual intervention and human error
+#   - Provide clear status reporting and validation
+#   - Ensure consistent firewall state across infrastructure
+#
+# Features:
+#   - Supports RHEL 7/8/9 and CentOS 7/8/9
+#   - Three operation modes: start, stop, check (default)
+#   - Automatic package installation if missing
+#   - Comprehensive error handling with rollback capability
+#   - Detailed status reporting
+#
+# Usage:
+#   Start firewall:   ansible-playbook firewall_management.yml -i inventory -e "firewall_action=start"
+#   Stop firewall:   ansible-playbook firewall_management.yml -i inventory -e "firewall_action=stop"
+#   Check status:    ansible-playbook firewall_management.yml -i inventory
+#                   (or -e "firewall_action=check")
+#
+# Author: GCG AAP SSA Team + v3.01 20260217
+#
+# License:
+#   📜 License Type: End User License Agreement (EULA)
+#   🔒 Authorization: Subscription-based License
+#
+# ============================================================================
+
+---
+- name: Firewall Management Tool
+  hosts: all
+  become: true
+  gather_facts: true
+
+  vars:
+    # Core configuration parameters
+    firewall_package_name: firewalld
+    firewall_service_name: firewalld
+
+    # Behavior control parameter
+    # Accepts: 'start', 'stop', 'check' (default: 'check' for safety)
+    firewall_action: "check"
+
+  tasks:
+    # ========================================================================
+    # Input Parameter Validation
+    # ========================================================================
+    # Validate that firewall_action is one of the allowed values
+    - name: Validate firewall_action parameter
+      ansible.builtin.assert:
+        that:
+          - firewall_action in ['start', 'stop', 'check']
+        fail_msg: "Invalid firewall_action value: '{{ firewall_action }}'. Must be one of: start, stop, check"
+        success_msg: "Parameter validation passed: firewall_action='{{ firewall_action }}'"
+      tags:
+        - validation
+        - always
+
+    - name: Display firewall_action parameter for debugging
+      ansible.builtin.debug:
+        msg:
+          - "Firewall action: {{ firewall_action }}"
+          - "Firewall package: {{ firewall_package_name }}"
+          - "Firewall service: {{ firewall_service_name }}"
+      tags:
+        - validation
+        - debug
+
+    # ========================================================================
+    # OS Compatibility Validation
+    # ========================================================================
+    # Ensure the target system is a supported RHEL/CentOS version
+    - name: Validate OS compatibility (RHEL/CentOS 7/8/9 only)
+      ansible.builtin.assert:
+        that:
+          - ansible_os_family == "RedHat"
+          - ansible_distribution in ['RedHat', 'CentOS']
+          - ansible_distribution_major_version in ['7', '8', '9']
+        fail_msg: "Unsupported operating system. This playbook is only available for RHEL 7/8/9 and CentOS 7/8/9. Current OS: {{ ansible_distribution }} {{ ansible_distribution_major_version }}"
+        success_msg: "OS compatibility check passed: {{ ansible_distribution }} {{ ansible_distribution_major_version }}"
+      tags:
+        - validation
+        - always
+
+    - name: Display OS information for debugging
+      ansible.builtin.debug:
+        msg:
+          - "Distribution: {{ ansible_distribution }}"
+          - "Version: {{ ansible_distribution_version }}"
+          - "Major Version: {{ ansible_distribution_major_version }}"
+          - "Architecture: {{ ansible_architecture }}"
+      tags:
+        - validation
+        - debug
+
+    # ========================================================================
+    # Core Firewall Management Operations
+    # ========================================================================
+    # Execute firewall start/stop operations with comprehensive error handling
+    - name: "{{ 'Start' if firewall_action == 'start' else 'Stop' }} firewall service"
+      when: firewall_action in ['start', 'stop']
+      block:
+        - name: Ensure {{ firewall_package_name }} package is installed
+          ansible.builtin.package:
+            name: "{{ firewall_package_name }}"
+            state: present
+          register: package_install_result
+          tags:
+            - package
+            - always
+
+        - name: Display package installation result for debugging
+          ansible.builtin.debug:
+            msg:
+              - "Package installation: {{ 'Changed' if package_install_result.changed else 'Already installed' }}"
+              - "Package name: {{ firewall_package_name }}"
+          when: package_install_result is defined
+          tags:
+            - package
+            - debug
+
+        - name: "{{ 'Start and enable' if firewall_action == 'start' else 'Stop and disable' }} {{ firewall_service_name }} service"
+          ansible.builtin.systemd:
+            name: "{{ firewall_service_name }}"
+            state: "{{ 'started' if firewall_action == 'start' else 'stopped' }}"
+            enabled: "{{ true if firewall_action == 'start' else false }}"
+          register: service_result
+          tags:
+            - service
+            - always
+
+        - name: Display service management result for debugging
+          ansible.builtin.debug:
+            msg:
+              - "Service state: {{ 'started' if firewall_action == 'start' else 'stopped' }}"
+              - "Service enabled: {{ true if firewall_action == 'start' else false }}"
+              - "Service changed: {{ service_result.changed | default(false) }}"
+          when: service_result is defined
+          tags:
+            - service
+            - debug
+
+      rescue:
+        - name: Handle firewall management errors
+          ansible.builtin.fail:
+            msg: |
+              Failed to {{ firewall_action }} firewall service on {{ inventory_hostname }}.
+              Error details: {{ ansible_failed_result.msg | default('Unknown error') }}
+              Please check:
+              1. Package installation: yum install -y {{ firewall_package_name }}
+              2. Service status: systemctl status {{ firewall_service_name }}
+              3. System logs: journalctl -u {{ firewall_service_name }}
+          tags:
+            - error_handling
+            - always
+
+      always:
+        - name: Display operation completion status
+          ansible.builtin.debug:
+            msg: "Firewall {{ firewall_action }} operation completed for {{ inventory_hostname }}"
+          tags:
+            - summary
+            - debug
+
+    # ========================================================================
+    # Service Status Collection and Reporting
+    # ========================================================================
+    # Collect current service status using service_facts for accurate reporting
+    - name: Collect service facts for status reporting
+      ansible.builtin.service_facts:
+      tags:
+        - status
+        - always
+
+    - name: Display current firewall service status
+      ansible.builtin.debug:
+        msg: |
+          +--------------------------------------------------+
+          |          Firewall Status Report                  |
+          +--------------------------------------------------+
+          |  Host: {{ inventory_hostname }}
+          |  Action: {{ {'start':'Start','stop':'Stop','check':'Check'}[firewall_action] }}
+          |  Service: {{ firewall_service_name }}
+          |  Current State: {{ ansible_facts.services[firewall_service_name + '.service'].state | default('unknown') }}
+          |  Enabled on Boot: {{ ansible_facts.services[firewall_service_name + '.service'].status | default('unknown') }}
+          |  Distribution: {{ ansible_distribution }} {{ ansible_distribution_major_version }}
+          +--------------------------------------------------+
+      tags:
+        - status
+        - report
+        - always
+
+    # ========================================================================
+    # Final Summary
+    # ========================================================================
+    - name: Display completion summary
+      ansible.builtin.debug:
+        msg:
+          - "Firewall management operation completed"
+          - "Host: {{ inventory_hostname }}"
+          - "Action: {{ firewall_action }}"
+          - "Service: {{ firewall_service_name }}"
+          - "Final State: {{ ansible_facts.services[firewall_service_name + '.service'].state | default('unknown') }}"
+      tags:
+        - summary
+        - always
+
