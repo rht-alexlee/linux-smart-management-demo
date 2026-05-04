@@ -36,7 +36,7 @@
 ---
 - name: Generate OS Information Collection Report for RHEL/CentOS Systems
   hosts: all
-  become: false
+  become: true
   gather_facts: true
   
   vars:
