@@ -1,0 +1,158 @@
+[root@aap25 27_cve_based_patching]# ansible-playbook rhel_patch_install_site.yml -i inventory   -e "cve_id=CVE-2023-42753"   -e "apply_patch=no"
+[DEPRECATION WARNING]: [defaults]collections_paths option, does not fit var naming standard, use the singular form collections_path instead. This feature will be
+removed from ansible-core in version 2.19. Deprecation warnings can be disabled by setting deprecation_warnings=False in ansible.cfg.
+
+PLAY [Play 1: Install Security Patches Based on CVE ID] ****************************************************************************************************************
+
+TASK [Gathering Facts] *************************************************************************************************************************************************
+ok: [Test-RHEL-7.9-1]
+
+TASK [Validate OS compatibility] ***************************************************************************************************************************************
+ok: [Test-RHEL-7.9-1] => {
+    "changed": false,
+    "msg": "OS compatibility check passed: RedHat 7"
+}
+
+TASK [Display OS information] ******************************************************************************************************************************************
+ok: [Test-RHEL-7.9-1] => {
+    "msg": [
+        "OS Distribution: RedHat",
+        "OS Version: 7.9",
+        "OS Major Version: 7",
+        "Package Manager: yum"
+    ]
+}
+
+TASK [Validate CVE ID format] ******************************************************************************************************************************************
+ok: [Test-RHEL-7.9-1] => {
+    "changed": false,
+    "msg": "CVE ID format validated: CVE-2023-42753"
+}
+
+TASK [Validate apply_patch parameter] **********************************************************************************************************************************
+ok: [Test-RHEL-7.9-1] => {
+    "changed": false,
+    "msg": "Apply patch parameter validated: no"
+}
+
+TASK [Check if package manager is available] ***************************************************************************************************************************
+ok: [Test-RHEL-7.9-1]
+
+TASK [Display package manager availability] ****************************************************************************************************************************
+ok: [Test-RHEL-7.9-1] => {
+    "msg": "Package manager yum is available"
+}
+
+TASK [Check repository metadata] ***************************************************************************************************************************************
+ok: [Test-RHEL-7.9-1]
+
+TASK [Display repository status] ***************************************************************************************************************************************
+ok: [Test-RHEL-7.9-1] => {
+    "msg": "Repository check succeeded"
+}
+
+TASK [Install yum-plugin-security for RHEL 7] **************************************************************************************************************************
+ok: [Test-RHEL-7.9-1]
+
+TASK [Display yum-plugin-security installation status] *****************************************************************************************************************
+ok: [Test-RHEL-7.9-1] => {
+    "msg": "yum-plugin-security installed successfully"
+}
+
+TASK [Verify updateinfo command availability (RHEL 8/9)] ***************************************************************************************************************
+skipping: [Test-RHEL-7.9-1]
+
+TASK [Display updateinfo command availability] *************************************************************************************************************************
+skipping: [Test-RHEL-7.9-1]
+
+TASK [Task 2: Display CVE and system information] **********************************************************************************************************************
+ok: [Test-RHEL-7.9-1] => {
+    "msg": [
+        "==========================================",
+        "CVE ID: CVE-2023-42753",
+        "Host: Test-RHEL-7.9-1",
+        "RHEL Version: RedHat 7.9",
+        "Apply Patch: False",
+        "=========================================="
+    ]
+}
+
+TASK [Query CVE-related security updates] ******************************************************************************************************************************
+ok: [Test-RHEL-7.9-1]
+
+TASK [Parse CVE check result] ******************************************************************************************************************************************
+ok: [Test-RHEL-7.9-1]
+
+TASK [Display CVE check result] ****************************************************************************************************************************************
+ok: [Test-RHEL-7.9-1] => {
+    "msg": [
+        "CVE CVE-2023-42753 check result:",
+        [
+            "Loaded plugins: product-id, search-disabled-repos, subscription-manager",
+            "updateinfo list done"
+        ],
+        "Affected packages: []",
+        "Update available: False"
+    ]
+}
+
+TASK [Apply CVE-specific security patches (RHEL 7)] ********************************************************************************************************************
+skipping: [Test-RHEL-7.9-1]
+
+TASK [Apply CVE-specific security patches (RHEL 8/9)] ******************************************************************************************************************
+skipping: [Test-RHEL-7.9-1]
+
+TASK [Display patch application result] ********************************************************************************************************************************
+skipping: [Test-RHEL-7.9-1]
+
+TASK [Display patch application skipped message] ***********************************************************************************************************************
+ok: [Test-RHEL-7.9-1] => {
+    "msg": [
+        "Patch application skipped: apply_patch is false"
+    ]
+}
+
+TASK [Ensure needs-restarting tool is installed] ***********************************************************************************************************************
+skipping: [Test-RHEL-7.9-1]
+
+TASK [Display utils installation status] *******************************************************************************************************************************
+skipping: [Test-RHEL-7.9-1]
+
+TASK [Check for reboot requirement using needs-restarting] *************************************************************************************************************
+skipping: [Test-RHEL-7.9-1]
+
+TASK [Check for reboot-required file as fallback] **********************************************************************************************************************
+skipping: [Test-RHEL-7.9-1]
+
+TASK [Display reboot warning] ******************************************************************************************************************************************
+skipping: [Test-RHEL-7.9-1]
+
+TASK [Display no reboot needed] ****************************************************************************************************************************************
+skipping: [Test-RHEL-7.9-1]
+
+TASK [Set default reboot status] ***************************************************************************************************************************************
+ok: [Test-RHEL-7.9-1]
+
+TASK [Check reboot status from reboot_check] ***************************************************************************************************************************
+ok: [Test-RHEL-7.9-1]
+
+TASK [Check reboot status from reboot_required_file] *******************************************************************************************************************
+skipping: [Test-RHEL-7.9-1]
+
+TASK [Final report: Display summary] ***********************************************************************************************************************************
+ok: [Test-RHEL-7.9-1] => {
+    "msg": [
+        "==========================================",
+        "CVE Patch Installation Summary",
+        "==========================================",
+        "CVE ID: CVE-2023-42753",
+        "Host: Test-RHEL-7.9-1",
+        "Update Available: False",
+        "Patch Applied: No",
+        "Reboot Required: Unknown",
+        "=========================================="
+    ]
+}
+
+PLAY RECAP *************************************************************************************************************************************************************
+Test-RHEL-7.9-1            : ok=19   changed=0    unreachable=0    failed=0    skipped=12   rescued=0    ignored=0

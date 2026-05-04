@@ -1,0 +1,360 @@
+# ============================================================================
+# Playbook: Automated RHEL Security Patch Installation Based on CVE ID
+# ============================================================================
+#
+# Description:
+#   This playbook automates the installation of security patches on RHEL/CentOS
+#   systems based on CVE (Common Vulnerabilities and Exposures) ID. It performs
+#   the following tasks:
+#   1. Validates OS compatibility and prerequisites
+#   2. Validates CVE ID format
+#   3. Checks for CVE-related security updates
+#   4. Installs required security plugins (yum-plugin-security for RHEL 7)
+#   5. Applies CVE-specific security patches
+#   6. Checks if system reboot is required after patching
+#
+# Author: GCG AAP SSA Team + v3.01 20260217
+#
+# License:
+#   📜 License Type: End User License Agreement (EULA)
+#   🔒 Authorization: Subscription-based License
+#
+# ============================================================================
+
+---
+# ============================================================================
+# Play 1: Install Security Patches Based on CVE ID
+# ============================================================================
+- name: "Play 1: Install Security Patches Based on CVE ID"
+  hosts: patch_servers
+  become: true
+  gather_facts: true
+
+  vars:
+    # --- Core Configuration Variables ---
+    # CVE ID to query and patch (e.g., CVE-2023-42753)
+    # Can be provided via command line: -e "cve_id=CVE-2023-42753"
+    cve_id: ""
+
+    # Whether to apply patches (yes/no, default: yes)
+    # Can be provided via command line: -e "apply_patch=yes"
+    apply_patch: "yes"
+
+    # Package manager selection based on RHEL version
+    pkg_mgr: "{{ 'yum' if ansible_distribution_major_version == '7' else 'dnf' }}"
+
+    # Convert apply_patch string to boolean
+    apply_patch_bool: "{{ apply_patch | lower == 'yes' }}"
+
+  tasks:
+    # ========================================================================
+    # OS Compatibility Validation
+    # ========================================================================
+    - name: "Validate OS compatibility"
+      ansible.builtin.assert:
+        that:
+          - ansible_distribution in ["RedHat", "CentOS"]
+          - ansible_distribution_major_version in ["7", "8", "9"]
+        fail_msg: "Unsupported operating system. This playbook is not available for the current OS. Supported: RHEL/CentOS 7/8/9"
+        success_msg: "OS compatibility check passed: {{ ansible_distribution }} {{ ansible_distribution_major_version }}"
+      tags:
+        - validation
+        - always
+
+    - name: "Display OS information"
+      ansible.builtin.debug:
+        msg:
+          - "OS Distribution: {{ ansible_distribution }}"
+          - "OS Version: {{ ansible_distribution_version }}"
+          - "OS Major Version: {{ ansible_distribution_major_version }}"
+          - "Package Manager: {{ pkg_mgr }}"
+
+    # ========================================================================
+    # Input Parameter Validation
+    # ========================================================================
+    - name: "Validate CVE ID format"
+      ansible.builtin.assert:
+        that:
+          - cve_id is defined
+          - cve_id | trim | length > 0
+          - cve_id | regex_search('^CVE-[0-9]{4}-[0-9]{4,}$')
+        fail_msg: "Invalid CVE ID format. Please provide a valid CVE ID (format: CVE-YYYY-NNNN, e.g., CVE-2023-42753)"
+        success_msg: "CVE ID format validated: {{ cve_id }}"
+      ignore_errors: true
+
+    - name: "Validate apply_patch parameter"
+      ansible.builtin.assert:
+        that:
+          - apply_patch is defined
+          - apply_patch | lower in ["yes", "no"]
+        fail_msg: "Invalid apply_patch parameter. Must be 'yes' or 'no'"
+        success_msg: "Apply patch parameter validated: {{ apply_patch }}"
+      ignore_errors: true
+
+    # ========================================================================
+    # Prerequisites: Repository and Plugin Validation
+    # ========================================================================
+    - name: "Prerequisites: Validate repository configuration"
+      block:
+        - name: "Check if package manager is available"
+          ansible.builtin.command: "which {{ pkg_mgr }}"
+          register: pkg_mgr_check
+          changed_when: false
+          ignore_errors: true
+
+        - name: "Display package manager availability"
+          ansible.builtin.debug:
+            msg: "Package manager {{ pkg_mgr }} {{ 'is available' if pkg_mgr_check.rc == 0 else 'is not available' }}"
+          when: pkg_mgr_check is defined
+
+        - name: "Check repository metadata"
+          ansible.builtin.command: "{{ pkg_mgr }} repolist"
+          register: repo_check
+          changed_when: false
+          ignore_errors: true
+
+        - name: "Display repository status"
+          ansible.builtin.debug:
+            msg: "Repository check {{ 'succeeded' if repo_check.rc == 0 else 'failed' }}"
+          when: repo_check is defined
+
+      rescue:
+        - name: "Handle repository validation failure"
+          ansible.builtin.debug:
+            msg: "Warning: Repository validation failed. Please ensure YUM/DNF repositories are properly configured."
+          ignore_errors: true
+
+    # ========================================================================
+    # Task 1: Install Required Security Plugins
+    # ========================================================================
+    - name: "Task 1: Install required security plugins"
+      block:
+        - name: "Install yum-plugin-security for RHEL 7"
+          ansible.builtin.package:
+            name: yum-plugin-security
+            state: present
+          register: yum_plugin_result
+          ignore_errors: true
+          when: ansible_distribution == 'RedHat' and ansible_distribution_major_version == '7'
+
+        - name: "Display yum-plugin-security installation status"
+          ansible.builtin.debug:
+            msg: "yum-plugin-security {{ 'installed successfully' if (yum_plugin_result is defined and not yum_plugin_result.failed) else 'installation failed or not needed' }}"
+          when: yum_plugin_result is defined
+
+        - name: "Verify updateinfo command availability (RHEL 8/9)"
+          ansible.builtin.command: "{{ pkg_mgr }} updateinfo --help"
+          register: updateinfo_check
+          changed_when: false
+          ignore_errors: true
+          when: ansible_distribution == 'RedHat' and ansible_distribution_major_version in ['8', '9']
+
+        - name: "Display updateinfo command availability"
+          ansible.builtin.debug:
+            msg: "updateinfo command {{ 'is available' if (updateinfo_check is defined and updateinfo_check.rc == 0) else 'is not available' }}"
+          when: updateinfo_check is defined and ansible_distribution_major_version in ['8', '9']
+
+      rescue:
+        - name: "Handle security plugin installation failure"
+          ansible.builtin.debug:
+            msg: "Warning: Failed to install security plugins. CVE query functionality may not work correctly."
+          ignore_errors: true
+
+    # ========================================================================
+    # Task 2: Display CVE and System Information
+    # ========================================================================
+    - name: "Task 2: Display CVE and system information"
+      ansible.builtin.debug:
+        msg:
+          - "=========================================="
+          - "CVE ID: {{ cve_id }}"
+          - "Host: {{ inventory_hostname }}"
+          - "RHEL Version: {{ ansible_distribution }} {{ ansible_distribution_version }}"
+          - "Apply Patch: {{ apply_patch_bool }}"
+          - "=========================================="
+
+    # ========================================================================
+    # Task 3: Check for CVE-related Updates
+    # ========================================================================
+    - name: "Task 3: Check for CVE-related updates"
+      block:
+        - name: "Query CVE-related security updates"
+          ansible.builtin.command: "{{ pkg_mgr }} updateinfo list --cve {{ cve_id }}"
+          register: cve_check_result
+          changed_when: false
+          ignore_errors: true
+
+        - name: "Parse CVE check result"
+          ansible.builtin.set_fact:
+            update_available: "{{ (cve_check_result.stdout_lines | default([]) | select('match', '.*(RHSA-|\\S+\\s+.*\\S+.*)') | reject('match', '^(Updating|Loaded plugins|Last metadata|updateinfo|No such CVE)') | list | length) > 0 }}"
+            affected_packages: "{{ cve_check_result.stdout_lines | default([]) | select('match', '.*(RHSA-|\\S+\\s+.*\\S+.*)') | reject('match', '^(Updating|Loaded plugins|Last metadata|updateinfo|No such CVE)') | map('split', ' ') | map('first') | list | default(['None']) }}"
+          ignore_errors: true
+          when: cve_check_result is defined
+
+        - name: "Display CVE check result"
+          ansible.builtin.debug:
+            msg:
+              - "CVE {{ cve_id }} check result:"
+              - "{{ cve_check_result.stdout_lines | default(['No updates available']) }}"
+              - "Affected packages: {{ affected_packages | default(['None']) }}"
+              - "Update available: {{ update_available | default(false) }}"
+          when: cve_check_result is defined
+
+      rescue:
+        - name: "Handle CVE check failure"
+          ansible.builtin.debug:
+            msg: "Warning: Failed to check for CVE-related updates. Please verify repository configuration and network connectivity."
+          ignore_errors: true
+
+    # ========================================================================
+    # Task 4: Apply CVE-specific Security Patches
+    # ========================================================================
+    - name: "Task 4: Apply CVE-specific security patches"
+      block:
+        - name: "Apply CVE-specific security patches (RHEL 7)"
+          ansible.builtin.command: "yum update --cve {{ cve_id }} -y"
+          register: patch_result
+          ignore_errors: true
+          when:
+            - apply_patch_bool | default(false)
+            - update_available | default(false)
+            - ansible_distribution_major_version == '7'
+
+        - name: "Apply CVE-specific security patches (RHEL 8/9)"
+          ansible.builtin.command: "dnf update --cve {{ cve_id }} -y"
+          register: patch_result
+          ignore_errors: true
+          when:
+            - apply_patch_bool | default(false)
+            - update_available | default(false)
+            - ansible_distribution_major_version in ['8', '9']
+
+        - name: "Display patch application result"
+          ansible.builtin.debug:
+            msg:
+              - "Patch application result:"
+              - "{{ patch_result.stdout_lines | default(['No packages were updated']) }}"
+          when:
+            - apply_patch_bool | default(false)
+            - update_available | default(false)
+            - patch_result is defined
+
+        - name: "Display patch application skipped message"
+          ansible.builtin.debug:
+            msg:
+              - "Patch application skipped: {{ 'apply_patch is false' if not apply_patch_bool else 'no updates available' }}"
+          when:
+            - (not apply_patch_bool | default(false)) or (not update_available | default(false))
+
+      rescue:
+        - name: "Handle patch application failure"
+          ansible.builtin.debug:
+            msg: "Warning: Failed to apply security patches. Please check repository configuration, network connectivity, and system logs."
+          ignore_errors: true
+
+    # ========================================================================
+    # Task 5: Check if Reboot is Required
+    # ========================================================================
+    - name: "Task 5: Check if reboot is required"
+      block:
+        - name: "Ensure needs-restarting tool is installed"
+          ansible.builtin.package:
+            name: "{{ 'yum-utils' if ansible_distribution_major_version == '7' else 'dnf-utils' }}"
+            state: present
+          register: utils_install_result
+          ignore_errors: true
+          when: apply_patch_bool | default(false) and update_available | default(false)
+
+        - name: "Display utils installation status"
+          ansible.builtin.debug:
+            msg: "Utils package {{ 'installed successfully' if (utils_install_result is defined and not utils_install_result.failed) else 'installation failed or not needed' }}"
+          when: utils_install_result is defined
+
+        - name: "Check for reboot requirement using needs-restarting"
+          ansible.builtin.command: needs-restarting -r
+          register: reboot_check
+          changed_when: false
+          ignore_errors: true
+          when: apply_patch_bool | default(false) and update_available | default(false)
+
+        - name: "Check for reboot-required file as fallback"
+          ansible.builtin.stat:
+            path: /var/run/reboot-required
+          register: reboot_required_file
+          ignore_errors: true
+          when:
+            - apply_patch_bool | default(false)
+            - update_available | default(false)
+            - reboot_check.rc != 0
+
+        - name: "Display reboot warning"
+          ansible.builtin.debug:
+            msg:
+              - "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! REBOOT WARNING !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+              - "Host {{ inventory_hostname }} requires a reboot to apply patches."
+              - "Please manually coordinate the reboot operation."
+              - "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!! REBOOT WARNING !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
+          when:
+            - apply_patch_bool | default(false)
+            - update_available | default(false)
+            - (reboot_check.rc == 1) or (reboot_required_file.stat.exists | default(false))
+
+        - name: "Display no reboot needed"
+          ansible.builtin.debug:
+            msg: "Host {{ inventory_hostname }} does not require a reboot."
+          when:
+            - apply_patch_bool | default(false)
+            - update_available | default(false)
+            - reboot_check.rc == 0
+            - not (reboot_required_file.stat.exists | default(false))
+
+      rescue:
+        - name: "Handle reboot check failure"
+          ansible.builtin.debug:
+            msg: "Warning: Failed to check reboot requirement. Please verify manually if reboot is needed."
+          ignore_errors: true
+      when: apply_patch_bool | default(false) and update_available | default(false)
+
+    # ========================================================================
+    # Final Report: Display Summary
+    # ========================================================================
+    - name: "Final report: Determine reboot status safely"
+      block:
+        - name: "Set default reboot status"
+          ansible.builtin.set_fact:
+            reboot_status: "Unknown"
+
+        - name: "Check reboot status from reboot_check"
+          ansible.builtin.set_fact:
+            reboot_status: "{{ 'Yes' if (reboot_check.rc | default(-1) == 1) else ('No' if (reboot_check.rc | default(-1) == 0) else 'Unknown') }}"
+          when: reboot_check is defined
+
+        - name: "Check reboot status from reboot_required_file"
+          ansible.builtin.set_fact:
+            reboot_status: "Yes"
+          when:
+            - reboot_required_file is defined
+            - reboot_required_file.stat is defined
+            - reboot_required_file.stat.exists | default(false)
+
+      rescue:
+        - name: "Handle reboot status determination failure"
+          ansible.builtin.set_fact:
+            reboot_status: "Unknown"
+          ignore_errors: true
+
+    - name: "Final report: Display summary"
+      ansible.builtin.debug:
+        msg:
+          - "=========================================="
+          - "CVE Patch Installation Summary"
+          - "=========================================="
+          - "CVE ID: {{ cve_id }}"
+          - "Host: {{ inventory_hostname }}"
+          - "Update Available: {{ update_available | default(false) }}"
+          - "Patch Applied: {{ 'Yes' if (apply_patch_bool | default(false) and update_available | default(false) and patch_result is defined) else 'No' }}"
+          - "Reboot Required: {{ reboot_status | default('Unknown') }}"
+          - "=========================================="
+      tags:
+        - always
+
