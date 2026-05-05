@@ -37,7 +37,7 @@
 
 ---
 - name: Firewall Management Tool
-  hosts: target-host
+  hosts: "{{target-host}}"
   become: true
   gather_facts: true
 
