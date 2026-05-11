@@ -83,7 +83,7 @@
       ansible.builtin.assert:
         that:
           - ansible_os_family == "RedHat"
-          - ansible_distribution in ['RedHat', 'CentOS']
+          - ansible_distribution in ['RedHat', 'CentOS','OracleLinux']
           - ansible_distribution_major_version in ['7', '8', '9']
         fail_msg: "Unsupported operating system. This playbook is only available for RHEL 7/8/9 and CentOS 7/8/9. Current OS: {{ ansible_distribution }} {{ ansible_distribution_major_version }}"
         success_msg: "OS compatibility check passed: {{ ansible_distribution }} {{ ansible_distribution_major_version }}"
