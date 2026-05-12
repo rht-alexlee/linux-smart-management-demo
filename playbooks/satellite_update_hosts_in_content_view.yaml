@@ -64,7 +64,7 @@
       ignore_errors: yes
       failed_when: false
       changed_when: false
-      ansible.builtin.command
+      ansible.builtin.command:
         cmd: "needs-restarting -r"
 
     - name: Reboot
