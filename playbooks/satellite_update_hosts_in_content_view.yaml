@@ -42,6 +42,11 @@
   hosts: target_upgrade_group
   gather_facts: true
   tasks:
+    - name: Ensure yum-utils is installed
+      become: true
+      ansible.builtin.dnf:
+        name: yum-utils
+
     - name: Update all packages
       when: not (security_only | bool)
       become: true
