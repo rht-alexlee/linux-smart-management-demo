@@ -1,0 +1,34 @@
+- name: Manage satellite
+  hosts: localhost
+  connection: local
+  tasks:
+    - name: Get content view info
+      register: content_view_result
+      redhat.satellite.content_view_info:
+        server_url: "{{ satellite_config.url }}"
+        organization: "{{ satellite_config.organization }}"
+        username: "{{ satellite_config.username }}"
+        password: "{{ satellite_config.password }}"
+        validate_certs: "{{ satellite_config.verify }}"
+        name: "{{ content_view }}"
+
+    - name: Get latest version
+      ansible.builtin.set_fact:
+        latest_version: "{{ content_view_result.content_view.versions[0].version }}"
+
+    - name: Print content view
+      ansible.builtin.debug:
+        var: latest_version
+
+    - name: Promote environments to latest version
+      loop: "{{ selected_environments | default(['Library']) }}"
+      redhat.satellite.content_view_version:
+        server_url: "{{ satellite_config.url }}"
+        organization: "{{ satellite_config.organization }}"
+        username: "{{ satellite_config.username }}"
+        password: "{{ satellite_config.password }}"
+        validate_certs: "{{ satellite_config.verify }}"
+        content_view: "{{ content_view }}"
+        version: "{{ latest_version }}"
+        lifecycle_environments:
+          - "{{ item }}"
