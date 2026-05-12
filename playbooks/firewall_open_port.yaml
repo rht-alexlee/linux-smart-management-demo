@@ -1,0 +1,26 @@
+- name: Get firewall config
+  hosts: all
+  tasks:
+    - name: Open port
+      become: true
+      loop: "{{ protocols }}"
+      when:
+        - port is defined
+        - protocols is defined
+      ansible.posix.firewalld:
+        port: "{{ port }}/{{ item }}"
+        source: "{{ source }}"
+        state: enabled
+        permanent: true
+        immediate: true
+
+    - name: Open service
+      become: true
+      when:
+        - service_name is defined
+      ansible.posix.firewalld:
+        service: "{{ service_name }}"
+        source: "{{ source }}"
+        state: enabled
+        permanent: true
+        immediate: true

@@ -1,0 +1,46 @@
+- name: Get firewall config
+  hosts: all
+  tasks:
+    - name: Get all firewall config
+      become: true
+      register: firewall_status
+      changed_when: false
+      ansible.builtin.command:
+        cmd: firewall-cmd --list-all
+
+    - name: Print firewall_status
+      ansible.builtin.debug:
+        var: firewall_status.stdout_lines
+
+    - name: Get firewall open ports
+      become: true
+      register: firewall_port_status
+      changed_when: false
+      ansible.builtin.command:
+        cmd: firewall-cmd --list-ports
+
+    - name: Print firewall_port_status
+      ansible.builtin.debug:
+        var: firewall_port_status.stdout_lines
+
+    - name: Get firewall open services
+      become: true
+      register: firewall_service_status
+      changed_when: false
+      ansible.builtin.command:
+        cmd: firewall-cmd --list-services
+
+    - name: Print firewall_service_status
+      ansible.builtin.debug:
+        var: firewall_service_status.stdout_lines
+
+    - name: Get firewall rich-rules
+      become: true
+      register: firewall_rich_rules_status
+      changed_when: false
+      ansible.builtin.command:
+        cmd: firewall-cmd --list-rich-rules
+
+    - name: Print firewall_rich_rules_status
+      ansible.builtin.debug:
+        var: firewall_rich_rules_status.stdout_lines

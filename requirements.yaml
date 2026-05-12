@@ -8,3 +8,4 @@ collections:
   - name: infra.aap_configuration
     version: ">=4.2.0"
   - name: redhat.satellite
+  - name: ansible.posix
