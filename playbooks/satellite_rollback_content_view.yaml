@@ -22,6 +22,14 @@
 
     - name: Get current version of environment
       ansible.builtin.set_fact:
+        versions: "{{ (content_view_result.content_view.versions }}"
+
+    - name: Print content view version of environment
+      ansible.builtin.debug:
+        msg: "{{ versions }}"
+
+    - name: Get current version of environment
+      ansible.builtin.set_fact:
         current_version: "{{ (content_view_result.content_view.versions | selectattr('environment_ids', 'contains', environment_id)) }}"
 
     - name: Print content view version of environment
