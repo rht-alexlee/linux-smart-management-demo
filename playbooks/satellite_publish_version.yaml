@@ -29,8 +29,9 @@
       ansible.builtin.debug:
         var: latest_version
 
-    - name: Promote environments to latest version
-      loop: "{{ selected_environments | default(['Library']) }}"
+
+    - name: Promote environments to latest version - Library
+      when: '"Library" in selected_environments'
       redhat.satellite.content_view_version:
         server_url: "{{ satellite_config.url }}"
         organization: "{{ satellite_config.organization }}"
@@ -40,4 +41,43 @@
         content_view: "{{ content_view }}"
         version: "{{ latest_version }}"
         lifecycle_environments:
-          - "{{ item }}"
+          - Library
+
+    - name: Promote environments to latest version - DEV
+      when: '"DEV" in selected_environments'
+      redhat.satellite.content_view_version:
+        server_url: "{{ satellite_config.url }}"
+        organization: "{{ satellite_config.organization }}"
+        username: "{{ satellite_config.username }}"
+        password: "{{ satellite_config.password }}"
+        validate_certs: "{{ satellite_config.verify }}"
+        content_view: "{{ content_view }}"
+        version: "{{ latest_version }}"
+        lifecycle_environments:
+          - DEV
+
+    - name: Promote environments to latest version - UAT
+      when: '"UAT" in selected_environments'
+      redhat.satellite.content_view_version:
+        server_url: "{{ satellite_config.url }}"
+        organization: "{{ satellite_config.organization }}"
+        username: "{{ satellite_config.username }}"
+        password: "{{ satellite_config.password }}"
+        validate_certs: "{{ satellite_config.verify }}"
+        content_view: "{{ content_view }}"
+        version: "{{ latest_version }}"
+        lifecycle_environments:
+          - UAT
+
+    - name: Promote environments to latest version - PROD
+      when: '"PROD" in selected_environments'
+      redhat.satellite.content_view_version:
+        server_url: "{{ satellite_config.url }}"
+        organization: "{{ satellite_config.organization }}"
+        username: "{{ satellite_config.username }}"
+        password: "{{ satellite_config.password }}"
+        validate_certs: "{{ satellite_config.verify }}"
+        content_view: "{{ content_view }}"
+        version: "{{ latest_version }}"
+        lifecycle_environments:
+          - PROD
