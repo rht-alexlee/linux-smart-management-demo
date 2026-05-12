@@ -1,0 +1,48 @@
+- name: Manage satellite
+  hosts: localhost
+  connection: local
+  tasks:
+    - name: Get content view info
+      register: content_view_result
+      redhat.satellite.content_view_info:
+        server_url: "{{ satellite_config.url }}"
+        organization: "{{ satellite_config.organization }}"
+        username: "{{ satellite_config.username }}"
+        password: "{{ satellite_config.password }}"
+        validate_certs: "{{ satellite_config.verify }}"
+        name: "{{ content_view }}"
+
+    - name: Print content view info
+      ansible.builtin.debug:
+        msg: "{{ content_view_result }}"
+
+    - name: Get hosts of environment
+      ansible.builtin.set_fact:
+        hosts_ids_in_environment: "{{ content_view_result.content_view.environments | selectattr('name', 'equalto', selected_environment) | map(attribute='hosts') | first }}"
+
+    - name: Print content view info
+      ansible.builtin.debug:
+        msg: "{{ hosts_ids_in_environment }}"
+
+    - name: Get hosts of environment
+      ansible.builtin.set_fact:
+        target_host_list: "{{ content_view_result.content_view.hosts | selectattr('id', 'in', hosts_ids_in_environment) | map(attribute='name') | list }}"
+
+    - name: Print content view info
+      ansible.builtin.debug:
+        msg: "{{ target_host_list }}"
+
+    - name: Add host
+      loop: "{{ target_host_list }}"
+      ansible.builtin.add_host:
+        name: "{{ item }}"
+        group: target_upgrade_group
+
+- name: Run tasks on target_upgrade_group
+  hosts: target_upgrade_group
+  gather_facts: true
+  tasks:
+    - name: Update
+      ansible.builtin.dnf:
+        name: "*"
+        state: latest
