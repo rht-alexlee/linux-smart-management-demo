@@ -2,6 +2,15 @@
   hosts: localhost
   connection: local
   tasks:
+    - name: Publish a new version
+      redhat.satellite.content_view_version:
+        server_url: "{{ satellite_config.url }}"
+        organization: "{{ satellite_config.organization }}"
+        username: "{{ satellite_config.username }}"
+        password: "{{ satellite_config.password }}"
+        validate_certs: "{{ satellite_config.verify }}"
+        content_view: "{{ content_view }}"
+
     - name: Get content view info
       register: content_view_result
       redhat.satellite.content_view_info:
@@ -14,14 +23,14 @@
 
     - name: Get latest version
       ansible.builtin.set_fact:
-        latest_version: "{{ content_view_result.content_view.versions[0].version }}"
+        latest_version: "{{ content_view_result.content_view.latest_version }}"
 
     - name: Print content view
       ansible.builtin.debug:
         var: latest_version
 
-    - name: Promote environments to latest version
-      loop: "{{ selected_environments | default(['Library']) }}"
+    - name: Promote environments to latest version - Library
+      when: selected_environment == 'Library'
       redhat.satellite.content_view_version:
         server_url: "{{ satellite_config.url }}"
         organization: "{{ satellite_config.organization }}"
@@ -31,4 +40,49 @@
         content_view: "{{ content_view }}"
         version: "{{ latest_version }}"
         lifecycle_environments:
-          - "{{ item }}"
+          - Library
+
+    - name: Promote environments to latest version - DEV
+      when: selected_environment == 'DEV'
+      redhat.satellite.content_view_version:
+        server_url: "{{ satellite_config.url }}"
+        organization: "{{ satellite_config.organization }}"
+        username: "{{ satellite_config.username }}"
+        password: "{{ satellite_config.password }}"
+        validate_certs: "{{ satellite_config.verify }}"
+        content_view: "{{ content_view }}"
+        version: "{{ latest_version }}"
+        lifecycle_environments:
+          - Library
+          - DEV
+
+    - name: Promote environments to latest version - UAT
+      when: selected_environment == 'UAT'
+      redhat.satellite.content_view_version:
+        server_url: "{{ satellite_config.url }}"
+        organization: "{{ satellite_config.organization }}"
+        username: "{{ satellite_config.username }}"
+        password: "{{ satellite_config.password }}"
+        validate_certs: "{{ satellite_config.verify }}"
+        content_view: "{{ content_view }}"
+        version: "{{ latest_version }}"
+        lifecycle_environments:
+          - Library
+          - DEV
+          - UAT
+
+    - name: Promote environments to latest version - PROD
+      when: selected_environment == 'PROD'
+      redhat.satellite.content_view_version:
+        server_url: "{{ satellite_config.url }}"
+        organization: "{{ satellite_config.organization }}"
+        username: "{{ satellite_config.username }}"
+        password: "{{ satellite_config.password }}"
+        validate_certs: "{{ satellite_config.verify }}"
+        content_view: "{{ content_view }}"
+        version: "{{ latest_version }}"
+        lifecycle_environments:
+          - Library
+          - DEV
+          - UAT
+          - PROD

@@ -36,7 +36,7 @@
 ---
 - name: Generate OS Information Collection Report for RHEL/CentOS Systems
   hosts: all
-  become: false
+  become: true
   gather_facts: true
   
   vars:
@@ -45,6 +45,7 @@
     supported_distributions:
       - "RedHat"
       - "CentOS"
+      - "OracleLinux"
     supported_major_versions:
       - "7"
       - "8"
@@ -59,7 +60,7 @@
         that:
           - ansible_distribution in supported_distributions
           - ansible_distribution_major_version in supported_major_versions
-        fail_msg: "Unsupported operating system. This playbook is not available for the current OS. Supported: RHEL/CentOS 7/8/9"
+        fail_msg: "Unsupported operating system: {{ ansible_distribution }} {{ ansible_distribution_major_version }} . This playbook is not available for the current OS. Supported: RHEL/CentOS 7/8/9"
         success_msg: "OS compatibility check passed: {{ ansible_distribution }} {{ ansible_distribution_major_version }}"
       tags:
         - validation
