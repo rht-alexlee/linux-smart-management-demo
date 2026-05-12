@@ -14,7 +14,7 @@
 
     - name: Get environment id
       ansible.builtin.set_fact:
-        environment_id: "{{ (content_view_result.content_view.environments | selectattr('name', 'equalto', selected_environment))[0]['id'] | int }}"
+        environment_id: "{{ (content_view_result.content_view.environments | selectattr('name', 'equalto', selected_environment))[0]['id'] }}"
 
     - name: Print environment id
       ansible.builtin.debug:
@@ -30,7 +30,7 @@
 
     - name: Get current version of environment
       ansible.builtin.set_fact:
-        current_version: "{{ content_view_result.content_view.versions | selectattr('environment_ids', 'contains', environment_id) }}"
+        current_version: "{{ content_view_result.content_view.versions | selectattr('environment_ids', 'contains', environment_id | int) }}"
 
     - name: Print content view version of environment
       ansible.builtin.debug:
