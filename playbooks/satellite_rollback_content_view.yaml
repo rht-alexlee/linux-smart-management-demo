@@ -16,6 +16,10 @@
       ansible.builtin.set_fact:
         environment_id: "{{ (content_view_result.content_view.environments | selectattr('name', 'equalto', selected_environment))[0]['id'] }}"
 
+    - name: Print environment id
+      ansible.builtin.debug:
+        var: environment_id
+
     - name: Get current version of environment
       ansible.builtin.set_fact:
         current_version: "{{ (content_view_result.content_view.versions | selectattr('environment_ids', 'contains', environment_id))[0]['version'] }}"
@@ -50,10 +54,6 @@
         password: "{{ satellite_config.password }}"
         validate_certs: "{{ satellite_config.verify }}"
         name: "{{ content_view }}"
-
-    - name: Get environment id
-      ansible.builtin.set_fact:
-        environment_id: "{{ (content_view_result.content_view.environments | selectattr('name', 'equalto', selected_environment))[0]['id'] }}"
 
     - name: Get current version of environment
       ansible.builtin.set_fact:
