@@ -14,7 +14,7 @@
 
     - name: Get environment id
       ansible.builtin.set_fact:
-        environment_id: "{{ (content_view_result.content_view.environments | selectattr('name', 'equalto', selected_environment))[0]['id'] }}"
+        environment_id: "{{ (content_view_result.content_view.environments | selectattr('name', 'equalto', selected_environment))[0]['id'] | int }}"
 
     - name: Print environment id
       ansible.builtin.debug:
