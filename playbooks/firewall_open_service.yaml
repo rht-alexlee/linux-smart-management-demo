@@ -1,14 +1,12 @@
-- name: Open a firewall port
+- name: Open a service on firewall
   hosts: all
   tasks:
-    - name: Open port
+    - name: Open service
       become: true
-      loop: "{{ protocols }}"
       when:
-        - port is defined
-        - protocols is defined
+        - service_name is defined
       ansible.posix.firewalld:
-        port: "{{ port }}/{{ item }}"
+        service: "{{ service_name }}"
         source: "{{ source }}"
         state: enabled
         permanent: true
