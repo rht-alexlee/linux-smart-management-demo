@@ -32,7 +32,7 @@
       ansible.builtin.debug:
         msg: "Target version is {{ target_version }}"
 
-    - name: Publish a new version
+    - name: Change content view version
       redhat.satellite.content_view_version:
         server_url: "{{ satellite_config.url }}"
         organization: "{{ satellite_config.organization }}"
