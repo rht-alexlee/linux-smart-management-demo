@@ -43,7 +43,7 @@
   gather_facts: true
   tasks:
     - name: Update all packages
-      when: !security_only
+      when: not (security_only | bool)
       become: true
       ansible.builtin.dnf:
         name: "*"
@@ -51,7 +51,7 @@
         update_cache: true
 
     - name: Update security packages only
-      when: security_only
+      when: (security_only | bool)
       become: true
       ansible.builtin.dnf:
         name: "*"
@@ -68,11 +68,13 @@
         cmd: "needs-restarting -r"
 
     - name: Reboot
-      when: reboot_required.rc == 1 and can_reboot
+      when: reboot_required.rc == 1 and (can_reboot | bool)
       ansible.builtin.reboot:
         msg: "{{ inventory_hostname }} will be rebooted by Ansible after patch update"
 
-    - name: Reboot
-      when: reboot_required.rc == 1 and !can_reboot
+    - name: Print hosts that needs to be rebooted manually
+      when:
+        - reboot_required.rc == 1
+        - not (can_reboot | bool)
       ansible.builtin.debug:
         msg: "{{ inventory_hostname }} needs to be rebooted manually after patch"
