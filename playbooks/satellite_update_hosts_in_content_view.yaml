@@ -67,6 +67,11 @@
       ansible.builtin.command:
         cmd: "needs-restarting -r"
 
+    - name: No reboot is required
+      when: reboot_required.rc == 0
+      ansible.builtin.debug:
+        msg: "{{ inventory_hostname }} don't need to reboot"
+
     - name: Reboot
       when: reboot_required.rc == 1 and (can_reboot | bool)
       ansible.builtin.reboot:
