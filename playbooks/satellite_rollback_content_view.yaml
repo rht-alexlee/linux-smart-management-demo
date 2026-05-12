@@ -22,43 +22,9 @@
 
     - name: Get current version of environment
       ansible.builtin.set_fact:
-        current_version: "{{ (content_view_result.content_view.versions | selectattr('environment_ids', 'contains', environment_id))[0]['version'] }}"
+        current_version: "{{ (content_view_result.content_view.versions | selectattr('environment_ids', 'contains', environment_id)) }}"
 
     - name: Print content view version of environment
       ansible.builtin.debug:
         msg: "Environment {{ selected_environment }} is {{ current_version }} before rollback"
 
-    - name: Print target version of environment
-      ansible.builtin.debug:
-        msg: "Target version is {{ target_version }}"
-
-    - name: Publish a new version
-      redhat.satellite.content_view_version:
-        server_url: "{{ satellite_config.url }}"
-        organization: "{{ satellite_config.organization }}"
-        username: "{{ satellite_config.username }}"
-        password: "{{ satellite_config.password }}"
-        validate_certs: "{{ satellite_config.verify }}"
-        content_view: "{{ content_view }}"
-        lifecycle_environments:
-          - "{{ selected_environment }}"
-        version: "{{ target_version }}"
-        force: true
-
-    - name: Get content view info
-      register: content_view_result
-      redhat.satellite.content_view_info:
-        server_url: "{{ satellite_config.url }}"
-        organization: "{{ satellite_config.organization }}"
-        username: "{{ satellite_config.username }}"
-        password: "{{ satellite_config.password }}"
-        validate_certs: "{{ satellite_config.verify }}"
-        name: "{{ content_view }}"
-
-    - name: Get current version of environment
-      ansible.builtin.set_fact:
-        current_version: "{{ (content_view_result.content_view.versions | selectattr('environment_ids', 'contains', environment_id))[0]['version'] }}"
-
-    - name: Print content view version of environment
-      ansible.builtin.debug:
-        msg: "Environment {{ selected_environment }} is {{ current_version }} after rollback"
