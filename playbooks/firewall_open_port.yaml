@@ -9,7 +9,6 @@
         - protocols is defined
       ansible.posix.firewalld:
         port: "{{ port }}/{{ item }}"
-        source: "{{ source }}"
         state: enabled
         permanent: true
         immediate: true

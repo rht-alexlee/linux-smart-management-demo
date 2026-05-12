@@ -7,7 +7,6 @@
         - service_name is defined
       ansible.posix.firewalld:
         service: "{{ service_name }}"
-        source: "{{ source }}"
         state: enabled
         permanent: true
         immediate: true
