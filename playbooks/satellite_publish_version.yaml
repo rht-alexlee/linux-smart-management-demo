@@ -23,7 +23,7 @@
 
     - name: Get latest version
       ansible.builtin.set_fact:
-        latest_version: "{{ content_view_result.content_view.versions[0].version }}"
+        latest_version: "{{ content_view_result.content_view.latest_version }}"
 
     - name: Print content view
       ansible.builtin.debug:
