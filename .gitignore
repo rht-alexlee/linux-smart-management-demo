@@ -1,3 +1,5 @@
 ansible.cfg
 .ansible/
 vars/credentials/
+tests/
+hosts.ini

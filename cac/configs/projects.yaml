@@ -1,0 +1,7 @@
+controller_projects:
+  - name: linux-smart-management-demo
+    organization: Linux-Mgmt
+    scm_type: git
+    scm_url: https://github.com/rht-alexlee/linux-smart-management-demo.git
+    scm_branch: main
+    description: Linux management project
