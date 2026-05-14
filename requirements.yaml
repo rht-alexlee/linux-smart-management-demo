@@ -1,5 +1,2 @@
 ---
 collections:
-  - name: infra.aap_configuration
-  - name: redhat.satellite
-  - name: ansible.posix
