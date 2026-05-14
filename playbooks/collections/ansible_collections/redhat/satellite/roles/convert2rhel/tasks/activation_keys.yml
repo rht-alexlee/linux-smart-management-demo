@@ -1,0 +1,72 @@
+---
+- name: "Create activation key '{{ satellite_convert2rhel_key_centos7 }}'"
+  redhat.satellite.activation_key:
+    username: "{{ satellite_username }}"
+    password: "{{ satellite_password }}"
+    server_url: "{{ satellite_server_url }}"
+    validate_certs: "{{ satellite_validate_certs | default(omit) }}"
+    organization: "{{ satellite_organization }}"
+    name: "{{ satellite_convert2rhel_key_centos7 }}"
+    lifecycle_environment: "{{ satellite_convert2rhel_lifecycle_env }}"
+    content_view: "{{ satellite_convert2rhel_key_centos7 }}"
+  when: satellite_content_rhel_enable_rhel7
+
+- name: "Create activation key '{{ satellite_convert2rhel_key_centos8 }}'"
+  redhat.satellite.activation_key:
+    username: "{{ satellite_username }}"
+    password: "{{ satellite_password }}"
+    server_url: "{{ satellite_server_url }}"
+    validate_certs: "{{ satellite_validate_certs | default(omit) }}"
+    organization: "{{ satellite_organization }}"
+    name: "{{ satellite_convert2rhel_key_centos8 }}"
+    lifecycle_environment: "{{ satellite_convert2rhel_lifecycle_env }}"
+    content_view: "{{ satellite_convert2rhel_key_centos8 }}"
+  when: satellite_content_rhel_enable_rhel8
+
+- name: "Create activation key '{{ satellite_convert2rhel_key_oracle7 }}'"  # noqa: args[module]
+  redhat.satellite.activation_key:
+    username: "{{ satellite_username }}"
+    password: "{{ satellite_password }}"
+    server_url: "{{ satellite_server_url }}"
+    validate_certs: "{{ satellite_validate_certs | default(omit) }}"
+    organization: "{{ satellite_organization }}"
+    name: "{{ satellite_convert2rhel_key_oracle7 }}"
+    lifecycle_environment: "{{ satellite_convert2rhel_lifecycle_env }}"
+    content_view: "{{ satellite_convert2rhel_content_view }}"
+  when: satellite_convert2rhel_enable_oracle7
+
+- name: "Create activation key '{{ satellite_convert2rhel_key_oracle8 }}'"  # noqa: args[module]
+  redhat.satellite.activation_key:
+    username: "{{ satellite_username }}"
+    password: "{{ satellite_password }}"
+    server_url: "{{ satellite_server_url }}"
+    validate_certs: "{{ satellite_validate_certs | default(omit) }}"
+    organization: "{{ satellite_organization }}"
+    name: "{{ satellite_convert2rhel_key_oracle8 }}"
+    lifecycle_environment: "{{ satellite_convert2rhel_lifecycle_env }}"
+    content_view: "{{ satellite_convert2rhel_content_view }}"
+  when: satellite_convert2rhel_enable_oracle8
+
+- name: "Create activation key '{{ satellite_convert2rhel_key_rhel7 }}'"
+  redhat.satellite.activation_key:
+    username: "{{ satellite_username }}"
+    password: "{{ satellite_password }}"
+    server_url: "{{ satellite_server_url }}"
+    validate_certs: "{{ satellite_validate_certs | default(omit) }}"
+    organization: "{{ satellite_organization }}"
+    name: "{{ satellite_convert2rhel_key_rhel7 }}"
+    lifecycle_environment: "{{ satellite_convert2rhel_lifecycle_env }}"
+    content_view: "{{ satellite_convert2rhel_content_view }}"
+  when: satellite_content_rhel_enable_rhel7
+
+- name: "Create activation key '{{ satellite_convert2rhel_key_rhel8 }}'"
+  redhat.satellite.activation_key:
+    username: "{{ satellite_username }}"
+    password: "{{ satellite_password }}"
+    server_url: "{{ satellite_server_url }}"
+    validate_certs: "{{ satellite_validate_certs | default(omit) }}"
+    organization: "{{ satellite_organization }}"
+    name: "{{ satellite_convert2rhel_key_rhel8 }}"
+    lifecycle_environment: "{{ satellite_convert2rhel_lifecycle_env }}"
+    content_view: "{{ satellite_convert2rhel_content_view }}"
+  when: satellite_content_rhel_enable_rhel8

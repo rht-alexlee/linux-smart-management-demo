@@ -1,0 +1,15 @@
+---
+- name: Create locations  # noqa: args[module]
+  redhat.satellite.location:
+    username: "{{ satellite_username | default(omit) }}"
+    password: "{{ satellite_password | default(omit) }}"
+    server_url: "{{ satellite_server_url | default(omit) }}"
+    validate_certs: "{{ satellite_validate_certs | default(omit) }}"
+    name: "{{ item.name }}"
+    description: "{{ item.description | default(omit) }}"
+    parent: "{{ item.parent | default(omit) }}"
+    organizations: "{{ item.organizations | default(omit) }}"
+    parameters: "{{ item.parameters | default(omit) }}"
+    ignore_types: "{{ item.ignore_types | default(omit) }}"
+    state: "{{ item.state | default('present') }}"
+  loop: "{{ satellite_locations }}"

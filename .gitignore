@@ -3,3 +3,4 @@ ansible.cfg
 vars/credentials/
 tests/
 hosts.ini
+requirements.yaml
